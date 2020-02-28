@@ -1,14 +1,14 @@
-import SocketIO from 'socket.io'
 import app from '.'
 import lan from './LAN'
 import CLI from './CLI'
 import cli from './cliInterface'
 import Logger from './Logger'
+import SocketIO from 'socket.io'
 import EventRelay from './EventRelay'
 import Connection from './Connection'
 import binaryInstaller from './binaryInstaller'
 import electronInterface from './electronInterface'
-import ConnectionPool from './ConnectionPool'
+import CLIWebSocket from './CLIWebSocket'
 import environment from './environment'
 import Installer from './Installer'
 import EventBus from './EventBus'
@@ -18,28 +18,36 @@ import debug from 'debug'
 
 const d = debug('r3:backend:Server')
 
-class Controller {
-  private io: SocketIO.Server
-  private pool: ConnectionPool
+export default class Controller {
+  private uiIO: SocketIO.Server
+  private cliWS: CLIWebSocket
 
-  constructor(io: SocketIO.Server, pool: ConnectionPool) {
-    this.io = io
-    this.pool = pool
-    EventBus.on(server.EVENTS.authenticated, this.openSockets)
+  constructor(uiIO: SocketIO.Server, cliWS: CLIWebSocket) {
+    this.uiIO = uiIO
+    this.cliWS = cliWS
+
+    EventBus.on(server.EVENTS.authenticated, this.authenticated)
 
     let eventNames = [
       ...Object.values(user.EVENTS),
       ...Object.values(Installer.EVENTS),
       ...Object.values(Connection.EVENTS),
-      ...Object.values(ConnectionPool.EVENTS),
+      // ...Object.values(ConnectionPool.EVENTS),
       ...Object.values(lan.EVENTS),
       ...Object.values(CLI.EVENTS),
       ...Object.values(electronInterface.EVENTS),
     ]
-    new EventRelay(eventNames, EventBus, this.io.sockets)
+    new EventRelay(eventNames, EventBus, this.uiIO.sockets)
   }
 
-  openSockets = (socket: SocketIO.Socket) => {
+  authenticated = (socket: SocketIO.Socket) => {
+    this.bindUi(socket)
+    this.bindCLI()
+    // send the secure data
+    this.syncBackend()
+  }
+
+  bindUi = (socket: SocketIO.Socket) => {
     socket.on('user/sign-out', user.signOut)
     socket.on('user/quit', this.quit)
     socket.on('service/connect', this.connect)
@@ -54,76 +62,101 @@ class Controller {
     socket.on('device', this.device)
     socket.on('scan', this.scan)
     socket.on('interfaces', this.interfaces)
-    socket.on('freePort', this.freePort)
+    // socket.on('freePort', this.freePort)
     socket.on('restart', this.restart)
     socket.on('uninstall', this.uninstall)
+  }
 
-    // things are ready - send the secure data
-    this.syncBackend()
+  bindCLI = () => {
+    this.cliWS.onConnect = () => console.log('onConnect')
+    this.cliWS.onClose = () => console.log('onClose')
+    this.cliWS.onError = () => console.warn('onError')
+    this.cliWS.on('GetConnections', (response: IPayload) => {
+      Logger.info('socket.on-GetConnections', { response: response.data })
+    })
+    this.cliWS.on('SetConnections', (response: IPayload) => {
+      Logger.info('socket.on-SetConnections', { response: response.data })
+    })
+    this.cliWS.on('GetAuth', (response: IPayload) => {
+      Logger.info('socket.on-GetAuth', { response: response.data })
+    })
+    this.cliWS.on('SetAuth', (response: IPayload) => {
+      Logger.info('socket.on-SetAuth', { response: response.data })
+    })
+    this.cliWS.on('Forget', (response: IPayload) => {
+      Logger.info('socket.on-Forget', { response: response.data })
+    })
+  }
+
+  syncBackend = async () => {
+    this.uiIO.emit('targets', cli.data.targets)
+    this.uiIO.emit('device', cli.data.device)
+    this.uiIO.emit('scan', lan.data)
+    this.uiIO.emit('interfaces', lan.interfaces)
+    this.uiIO.emit('admin', (cli.data.admin && cli.data.admin.username) || '')
+    this.uiIO.emit(lan.EVENTS.privateIP, lan.privateIP)
+    this.uiIO.emit('os', environment.simplesOS)
+    this.cliWS.send('GetConnections', [])
+    // this.io.emit(ConnectionPool.EVENTS.updated, this.pool.toJSON())
+    // this.io.emit(ConnectionPool.EVENTS.freePort, this.pool.freePort)
   }
 
   targets = async (result: ITarget[]) => {
     await cli.set('targets', result)
-    this.io.emit('targets', cli.data.targets)
+    this.uiIO.emit('targets', cli.data.targets)
   }
 
   device = async (result: IDevice) => {
     await cli.set('device', result)
-    this.io.emit('device', cli.data.device)
-    this.io.emit('targets', cli.data.targets)
+    this.uiIO.emit('device', cli.data.device)
+    this.uiIO.emit('targets', cli.data.targets)
   }
 
   interfaces = async () => {
     await lan.getInterfaces()
-    this.io.emit('interfaces', lan.interfaces)
+    this.uiIO.emit('interfaces', lan.interfaces)
   }
 
   scan = async (interfaceName: string) => {
     await lan.scan(interfaceName)
-    this.io.emit('scan', lan.data)
+    this.uiIO.emit('scan', lan.data)
   }
 
-  freePort = async () => {
-    await this.pool.nextFreePort()
-    this.io.emit('nextFreePort', this.pool.freePort)
-  }
-
-  syncBackend = async () => {
-    this.io.emit('targets', cli.data.targets)
-    this.io.emit('device', cli.data.device)
-    this.io.emit('scan', lan.data)
-    this.io.emit('interfaces', lan.interfaces)
-    this.io.emit('admin', (cli.data.admin && cli.data.admin.username) || '')
-    this.io.emit(ConnectionPool.EVENTS.updated, this.pool.toJSON())
-    this.io.emit(ConnectionPool.EVENTS.freePort, this.pool.freePort)
-    this.io.emit(lan.EVENTS.privateIP, lan.privateIP)
-    this.io.emit('os', environment.simplesOS)
-  }
+  // freePort = async () => {
+  //   await this.pool.nextFreePort()
+  //   this.io.emit('nextFreePort', this.pool.freePort)
+  // }
 
   connections = () => {
     d('List connections')
-    this.io.emit('pool', this.pool.toJSON())
+    this.cliWS.send('GetConnections', [])
+    // this.io.emit('pool', this.pool.toJSON())
   }
 
   connection = async (connection: IConnection) => {
-    d('Connection set:', connection)
-    await this.pool.set(connection)
+    d('Connection set', connection)
+    this.cliWS.send('SetConnections', [connection])
+    // await this.pool.set(connection)
   }
 
   connect = async (connection: IConnection) => {
-    Logger.info('Connect:', { connection })
+    Logger.info('CONNECT', { connection })
     d('Connect:', connection)
-    await this.pool.start(connection)
+    this.cliWS.send('SetConnections', [connection])
+    this.cliWS.send('GetConnections', [])
+    // await this.pool.start(connection)
   }
 
   disconnect = async (connection: IConnection) => {
     d('Disconnect Socket:', connection)
-    await this.pool.stop(connection, false)
+    this.cliWS.send('SetConnections', [])
+    // await this.pool.stop(connection, false)
   }
 
   forget = async (connection: IConnection) => {
     d('Forget:', connection)
-    await this.pool.forget(connection)
+    this.cliWS.send('SetConnections', [])
+    // await this.pool.forget(connection)
   }
 
   quit = () => {
@@ -139,7 +172,7 @@ class Controller {
   uninstall = async () => {
     Logger.info('UNINSTALL INITIATED')
     user.signOut()
-    await this.pool.reset()
+    // await this.pool.reset()
     await cli.delete()
     await cli.unInstall()
     await binaryInstaller.uninstall()
@@ -155,5 +188,3 @@ class Controller {
     EventBus.emit(electronInterface.EVENTS.openOnLogin, open)
   }
 }
-
-export default Controller

@@ -9,7 +9,7 @@ import { r3 } from './remote.it'
 
 const d = debug('r3:backend:User')
 
-export class User {
+class User {
   EVENTS = {
     signInError: 'user/sign-in/error',
     signedOut: 'signed-out',

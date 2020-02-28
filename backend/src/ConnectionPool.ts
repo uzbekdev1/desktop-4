@@ -26,20 +26,20 @@ export default class ConnectionPool {
     this.connectionsFile = new JSONFile<IConnection[]>(path.join(environment.userPath, 'connections.json'))
     const connections: IConnection[] = this.connectionsFile.read() || []
 
-    Logger.info('Initializing connections pool', { length: connections.length })
+    // Logger.info('Initializing connections pool', { length: connections.length })
 
-    // load connection data
-    connections.map(c => this.set(c))
+    // // load connection data
+    // connections.map(c => this.set(c))
 
-    // init freeport
-    this.nextFreePort()
+    // // init freeport
+    // this.nextFreePort()
 
-    // Listen to events to synchronize state
-    EventBus.on(Connection.EVENTS.disconnected, this.updated)
-    EventBus.on(Connection.EVENTS.connected, this.updated)
-    EventBus.on(Connection.EVENTS.started, this.updated)
-    EventBus.on(electronInterface.EVENTS.forget, this.forget)
-    EventBus.on(electronInterface.EVENTS.ready, this.updated)
+    // // Listen to events to synchronize state
+    // EventBus.on(Connection.EVENTS.disconnected, this.updated)
+    // EventBus.on(Connection.EVENTS.connected, this.updated)
+    // EventBus.on(Connection.EVENTS.started, this.updated)
+    // EventBus.on(electronInterface.EVENTS.forget, this.forget)
+    // EventBus.on(electronInterface.EVENTS.ready, this.updated)
   }
 
   // maintain auto start connections

@@ -36,8 +36,8 @@ export default class Connection extends EventEmitter {
 
   constructor(connection: IConnection) {
     super()
-    connection.createdTime = Date.now()
-    this.set(connection)
+    // connection.createdTime = Date.now()
+    // this.set(connection)
   }
 
   set({ host = IP_PRIVATE, restriction = IP_OPEN, ...connection }: IConnection) {

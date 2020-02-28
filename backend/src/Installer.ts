@@ -74,13 +74,21 @@ export default class Installer {
 
   async isCurrent(log?: boolean) {
     let current = false
-    let version = 'Installing'
+    let versionInstalled = 'Installing'
     if (this.isInstalled()) {
-      version = await cli.version()
-      current = semverCompare(version, this.version) >= 0
-      log && Logger.info('CURRENT', { name: this.name, checkVersion: version, version: this.version })
+      versionInstalled = await cli.version()
+      d('CLI VERSION INSTALLED', versionInstalled)
+      d('CLI VERSION REQUIRED', this.version)
+      current = semverCompare(versionInstalled, this.version) >= 0
+      log &&
+        Logger.info('IS CURRENT?', {
+          name: this.name,
+          current,
+          versionInstalled,
+          versionRequired: this.version,
+          compare: semverCompare(versionInstalled, this.version),
+        })
     }
-    if (!current && log) Logger.info('NOT CURRENT', { name: this.name, checkVersion: version, version: this.version })
     return current
   }
 

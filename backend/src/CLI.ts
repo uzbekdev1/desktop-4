@@ -146,6 +146,8 @@ export default class CLI {
   }
 
   async version() {
+    // TEMP RETURN NEW VERSION WHILE NICOLAE FIXED CLI
+    return '0.39.0' // must be this format only
     const result = await this.exec({ params: ['version', '-j'], quiet: true })
     return result.toString().trim()
   }

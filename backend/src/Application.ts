@@ -9,6 +9,8 @@ import user from './User'
 import server from './server'
 import Tracker from './Tracker'
 import EventBus from './EventBus'
+import CLIWebSocket from './CLIWebSocket'
+import { WEBSOCKET_URL } from './constants'
 
 const d = debug('r3:backend:Application')
 
@@ -26,9 +28,13 @@ export default class Application {
     this.bindExitHandlers()
     environment.setElevatedState()
     await this.install()
+    const cliWS = new CLIWebSocket(WEBSOCKET_URL)
     server.start()
     this.startHeartbeat()
-    if (server.io) new Controller(server.io, this.pool)
+
+    if (server.io) {
+      new Controller(server.io, cliWS)
+    }
 
     EventBus.on(user.EVENTS.signedIn, this.check)
     EventBus.on(user.EVENTS.signedOut, this.handleSignedOut)

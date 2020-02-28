@@ -38,7 +38,6 @@ class Server {
   }
 
   async start() {
-    let startupError
     const server = createServer(this.app)
       .on('error', error => {
         Logger.warn('SERVER START FAILED', { error, details: error.toString(), directory: WEB_DIR })
