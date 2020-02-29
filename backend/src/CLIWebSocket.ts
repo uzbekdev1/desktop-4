@@ -19,12 +19,8 @@ export default class CLIWebSocket {
     this.setUpConnection()
   }
 
-  public send(type: string, data: any) {
-    const dataAsString = JSON.stringify({
-      Type: type,
-      Data: JSON.stringify(data),
-    })
-    this._ws.send(dataAsString)
+  public emit(type: string, data: any) {
+    this._ws.send(JSON.stringify({ ...data, type }))
   }
 
   public on(type: string, callback: ICallback) {
@@ -34,9 +30,7 @@ export default class CLIWebSocket {
   private setUpConnection() {
     this._ws = new WebSocket(this._url)
 
-    this._ws.onclose = (event: any) => {
-      const response = JSON.parse(event.data)
-
+    this._ws.onclose = (response: any) => {
       if (typeof this.onClose === 'function') {
         this.onClose(response)
       }
@@ -53,26 +47,26 @@ export default class CLIWebSocket {
     }
 
     // WHEN data received, then de-serialize and pass up the chain
-    this._ws.onmessage = (event: any) => {
-      const response = JSON.parse(event.data)
+    this._ws.onmessage = (response: any) => {
+      const data = JSON.parse(response.data)
 
-      if (response.hasError) {
-        console.error(response.errorMessage)
+      console.log('CLI WEBSOCKET MESSAGE', data)
+
+      if (data.hasError) {
+        console.error(data.errorMessage)
       }
 
       if (typeof this.onDataReceived === 'function') {
-        this.onDataReceived(response)
+        this.onDataReceived(data)
       }
 
-      if (typeof this._onMessageReceived[response.type] === 'function') {
-        this._onMessageReceived[response.type](response)
+      if (typeof this._onMessageReceived[data.type] === 'function') {
+        this._onMessageReceived[data.type](data)
       }
     }
 
     // IF errors just notify
-    this._ws.onerror = (event: any) => {
-      const response = JSON.parse(event.data)
-
+    this._ws.onerror = (response: any) => {
       if (typeof this.onError === 'function') {
         this.onError(response)
       }

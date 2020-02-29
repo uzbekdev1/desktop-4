@@ -101,21 +101,33 @@ declare global {
   interface IConnection {
     id: string
     name: string
-    owner: string
-    deviceID: string
-    online: boolean
-    pid?: number
     port?: number
-    active?: boolean
-    host?: ipAddress // Bind address
     restriction?: ipAddress // Restriction IP address
-    autoStart?: boolean
-    connecting?: boolean
-    username?: string // support for launching where username could be saved
-    createdTime?: number // unix timestamp track for garbage cleanup
+    host?: ipAddress // Bind address
+    disabled?: boolean // stop/start connection keep offline
+    autoStart?: boolean // rename RETRY
+    failover?: boolean // should fail over to proxy
+
+    // May not need
+    restart?: boolean // command to restart an online connection if wanted
+
+    // state
+    online: boolean // connected state
+    connecting?: boolean // connection state
+    overProxy?: boolean // connection state
     startTime?: number // unix timestamp connection start time
     endTime?: number // unix timestamp connection close time
+
+    createdTime?: number // unix timestamp track for garbage cleanup
+    owner: string
     error?: ISimpleError
+
+    pid?: number // deprecated
+
+    // Metadata
+    active?: boolean // service active state
+    deviceID: string
+    username?: string // support for launching where username could be saved
     // deepLink?: string
   }
 

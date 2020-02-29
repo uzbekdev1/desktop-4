@@ -81,7 +81,7 @@ function getEventHandlers() {
 
     connect_error: () => backend.set({ key: 'error', value: true }),
 
-    pool: (result: IConnection[]) => {
+    connections: (result: IConnection[]) => {
       console.log('socket pool', result)
       backend.set({ key: 'connections', value: result })
     },
