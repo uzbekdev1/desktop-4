@@ -13,7 +13,7 @@ export const PortSetting: React.FC<{ service: IService; connection?: IConnection
 
   useEffect(() => {
     console.log('FREEPORT', freePort, currentPort)
-    if (!connection || !freePort || freePort !== currentPort) Controller.emit('freePort', connection)
+    if (!connection || !freePort || freePort != currentPort) Controller.emit('freePort', connection)
   }, [freePort, connection])
 
   if (!service) return null
@@ -29,7 +29,7 @@ export const PortSetting: React.FC<{ service: IService; connection?: IConnection
 
   return (
     <InlineSetting
-      value={currentPort}
+      value={currentPort || freePort}
       label="Port"
       disabled={disabled}
       resetValue={freePort}

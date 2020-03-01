@@ -50,7 +50,7 @@ class CLIWebSocket {
         Logger.info('CLI WEBSOCKET RECEIVE', { payload })
 
         if (payload.hasError) {
-          console.error(payload.errorMessage)
+          Logger.warn(payload.errorMessage)
         }
 
         if (typeof this.onMessageReceived[payload.type] === 'function') {
@@ -60,7 +60,7 @@ class CLIWebSocket {
 
       // IF errors just notify
       this.ws.on('error', (error: Error) => {
-        console.warn('CLI WEBSOCKET ERROR', { error })
+        Logger.warn('CLI WEBSOCKET ERROR', { error })
         reject(error)
       })
     })

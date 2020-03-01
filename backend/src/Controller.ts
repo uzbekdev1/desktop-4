@@ -9,7 +9,6 @@ import EventRelay from './EventRelay'
 import Connection from './Connection'
 import binaryInstaller from './binaryInstaller'
 import electronInterface from './electronInterface'
-import CLIWebSocket from './CLIWebSocket'
 import environment from './environment'
 import Installer from './Installer'
 import EventBus from './EventBus'
@@ -86,12 +85,19 @@ export default class Controller {
     this.uiIO.emit(lan.EVENTS.privateIP, lan.privateIP)
     this.uiIO.emit('os', environment.simplesOS)
     cliWS.emit('freePort', { ip: '127.0.0.1', port: 30000 })
-    cliWS.emit('connections', { connections: [] })
+    // cliWS.emit('auth', { userName: user.username, authHash: user.authHash })
+    // cliWS.emit('connections', { connections: [] })
   }
 
   connectionsEmit = (response: any) => {
     Logger.info('CLI WEBSOCKET RECEIVE CONNECTIONS', { response })
-    this.uiIO.emit('connections', response.connections)
+    const connections = response.connections.map((c: any) => ({
+      ...c,
+      id: c.uid,
+      host: c.hostname,
+      autoStart: c.retry,
+      ...c.metadata,
+    }))
     // let sample = {
     //   response: {
     //     type: 'connections',
@@ -110,6 +116,7 @@ export default class Controller {
     //     ],
     //   },
     // }
+    this.uiIO.emit('connections', connections)
   }
 
   freePortEmit = (response: any) => {
@@ -124,14 +131,11 @@ export default class Controller {
     cliWS.emit('connections', {
       connections: [
         {
+          ...connection,
           uid: connection.id,
-          name: connection.name,
           hostname: connection.host,
-          disabled: connection.disabled,
           retry: connection.autoStart,
           failover: true,
-          restriction: connection.restriction,
-          owner: connection.owner,
           metadata: { deviceID: connection.deviceID },
         },
       ],
@@ -149,13 +153,13 @@ export default class Controller {
   disconnect = (connection: IConnection) => {
     d('Disconnect Socket:', connection)
     // TODO update state and add disconnected connection
-    cliWS.emit('connections', [])
+    // cliWS.emit('connections', [])
   }
 
   forget = (connection: IConnection) => {
     d('Forget:', connection)
     // TODO remove iconnection from array and send
-    cliWS.emit('connections', [])
+    // cliWS.emit('connections', [])
   }
 
   freePort = (connection: IConnection) => {
