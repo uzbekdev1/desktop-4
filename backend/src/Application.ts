@@ -2,6 +2,7 @@ import debug from 'debug'
 import Controller from './Controller'
 import ConnectionPool from './ConnectionPool'
 import remoteitInstaller from './remoteitInstaller'
+import cliWS from './CLIWebSocket'
 import binaryInstaller from './binaryInstaller'
 import environment from './environment'
 import Logger from './Logger'
@@ -9,8 +10,6 @@ import user from './User'
 import server from './server'
 import Tracker from './Tracker'
 import EventBus from './EventBus'
-import CLIWebSocket from './CLIWebSocket'
-import { WEBSOCKET_URL } from './constants'
 
 const d = debug('r3:backend:Application')
 
@@ -28,13 +27,11 @@ export default class Application {
     this.bindExitHandlers()
     environment.setElevatedState()
     await this.install()
-    const cliWS = new CLIWebSocket(WEBSOCKET_URL)
+    await cliWS.start()
     server.start()
     this.startHeartbeat()
 
-    if (server.io) {
-      new Controller(server.io, cliWS)
-    }
+    if (server.io) new Controller(server.io)
 
     EventBus.on(user.EVENTS.signedIn, this.check)
     EventBus.on(user.EVENTS.signedOut, this.handleSignedOut)

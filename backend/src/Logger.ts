@@ -9,6 +9,15 @@ const MAX_LOG_SIZE_BYTES = 100 * 1000 // 10mb
 const MAX_LOG_FILES = 5
 export const LOG_DIR = path.join(environment.userPath, 'log')
 
+const { combine, timestamp, label, printf } = winston.format
+const consoleFormat = printf(p => {
+  const { timestamp, level, message } = p
+  delete p.timestamp
+  delete p.level
+  delete p.message
+  return `${timestamp} [${level}]: ${message} ${JSON.stringify(p)}`
+})
+
 const transports = [
   new winston.transports.File({
     filename: path.join(LOG_DIR, 'remoteit.error.log'),
@@ -26,7 +35,7 @@ const transports = [
     silent: ENV === 'test',
   }),
   new winston.transports.Console({
-    format: winston.format.prettyPrint({ colorize: true }),
+    format: combine(winston.format.colorize(), consoleFormat),
     silent: ENV === 'test',
   }),
 ]

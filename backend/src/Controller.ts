@@ -2,6 +2,7 @@ import app from '.'
 import lan from './LAN'
 import CLI from './CLI'
 import cli from './cliInterface'
+import cliWS from './CLIWebSocket'
 import Logger from './Logger'
 import SocketIO from 'socket.io'
 import EventRelay from './EventRelay'
@@ -20,11 +21,9 @@ const d = debug('Controller')
 
 export default class Controller {
   private uiIO: SocketIO.Server
-  private cliWS: CLIWebSocket
 
-  constructor(uiIO: SocketIO.Server, cliWS: CLIWebSocket) {
+  constructor(uiIO: SocketIO.Server) {
     this.uiIO = uiIO
-    this.cliWS = cliWS
 
     EventBus.on(server.EVENTS.authenticated, this.authenticated)
 
@@ -67,17 +66,13 @@ export default class Controller {
   }
 
   bindCLI = () => {
-    this.cliWS.onConnect = response => Logger.info('onConnect', { response })
-    this.cliWS.onClose = () => Logger.info('onClose')
-    this.cliWS.onError = error => Logger.warn('onError', { error })
+    cliWS.on('connections', this.connectionsEmit)
+    cliWS.on('freePort', this.freePortEmit)
 
-    this.cliWS.on('connections', this.connectionsEmit)
-    this.cliWS.on('freePort', this.freePortEmit)
-
-    // this.cliWS.on('GetAuth', (response: IPayload) => {
+    // cliWS.on('GetAuth', (response: IPayload) => {
     //   Logger.info('socket.on-GetAuth', { response: response.data })
     // })
-    // this.cliWS.on('SetAuth', (response: IPayload) => {
+    // cliWS.on('SetAuth', (response: IPayload) => {
     //   Logger.info('socket.on-SetAuth', { response: response.data })
     // })
   }
@@ -90,38 +85,57 @@ export default class Controller {
     this.uiIO.emit('admin', (cli.data.admin && cli.data.admin.username) || '')
     this.uiIO.emit(lan.EVENTS.privateIP, lan.privateIP)
     this.uiIO.emit('os', environment.simplesOS)
-    this.cliWS.emit('freePort', [])
-    this.cliWS.emit('connections', [])
+    cliWS.emit('freePort', { ip: '127.0.0.1', port: 30000 })
+    cliWS.emit('connections', { connections: [] })
   }
 
-  connectionsEmit = (response: IPayload) => {
+  connectionsEmit = (response: any) => {
     Logger.info('CLI WEBSOCKET RECEIVE CONNECTIONS', { response })
-    this.uiIO.emit('connections', response.data)
+    this.uiIO.emit('connections', response.connections)
+    // let sample = {
+    //   response: {
+    //     type: 'connections',
+    //     connections: [
+    //       {
+    //         uid: '80:00:00:00:01:00:53:AB',
+    //         name: 'Dragon_Craft - Minecraft',
+    //         restriction: '0.0.0.0',
+    //         hostname: '127.0.0.1',
+    //         retry: true,
+    //         failover: true,
+    //         owner: 'jamie@remote.it',
+    //         error: { code: 0, message: '', timestamp: 0 },
+    //         metadata: { deviceID: '80:00:00:00:01:00:53:A2' },
+    //       },
+    //     ],
+    //   },
+    // }
   }
 
-  freePortEmit = (response: IPayload) => {
-    Logger.info('CLI WEBSOCKET RECEIVE FREEPORT', { response })
-    this.uiIO.emit('freePort', response.data)
+  freePortEmit = (response: any) => {
+    Logger.info('CLI WEBSOCKET RECEIVE FREEPORT', { ...response })
+    this.uiIO.emit('freePort', response.port)
   }
 
   connection = (connection: IConnection) => {
     d('Connection set', connection)
     // TODO merge into array and send
 
-    this.cliWS.emit('connections', [
-      {
-        uid: connection.id,
-        name: connection.name,
-        hostname: connection.host,
-        disabled: connection.disabled,
-        retry: connection.autoStart,
-        failover: true,
-        restriction: connection.restriction,
-        owner: connection.owner,
-        metadata: { deviceID: connection.deviceID },
-      },
-    ])
-    this.cliWS.emit('connections', [])
+    cliWS.emit('connections', {
+      connections: [
+        {
+          uid: connection.id,
+          name: connection.name,
+          hostname: connection.host,
+          disabled: connection.disabled,
+          retry: connection.autoStart,
+          failover: true,
+          restriction: connection.restriction,
+          owner: connection.owner,
+          metadata: { deviceID: connection.deviceID },
+        },
+      ],
+    })
   }
 
   connect = (connection: IConnection) => {
@@ -135,13 +149,13 @@ export default class Controller {
   disconnect = (connection: IConnection) => {
     d('Disconnect Socket:', connection)
     // TODO update state and add disconnected connection
-    this.cliWS.emit('connections', [])
+    cliWS.emit('connections', [])
   }
 
   forget = (connection: IConnection) => {
     d('Forget:', connection)
     // TODO remove iconnection from array and send
-    this.cliWS.emit('connections', [])
+    cliWS.emit('connections', [])
   }
 
   freePort = (connection: IConnection) => {
@@ -149,7 +163,7 @@ export default class Controller {
       ip: connection.host,
       port: connection.port,
     })
-    this.cliWS.emit('freePort', {
+    cliWS.emit('freePort', {
       ip: connection.host,
       port: connection.port,
     })

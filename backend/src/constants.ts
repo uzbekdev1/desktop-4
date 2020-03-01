@@ -19,7 +19,7 @@ export const DEVELOPER_KEY = process.env.DEVELOPER_KEY || 'Mjc5REIzQUQtMTQyRC00N
 
 export const IP_OPEN: ipAddress = '0.0.0.0'
 export const IP_PRIVATE: ipAddress = '127.0.0.1'
-export const WEBSOCKET_URL = 'ws://127.0.0.1:64000/'
+export const WEBSOCKET_URL = 'ws://localhost:64000/'
 
 // Web directory
 export const WEB_DIR = path.join(__dirname, '../build')
