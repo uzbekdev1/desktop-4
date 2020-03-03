@@ -1,8 +1,9 @@
 import React from 'react'
-import Controller from '../../services/Controller'
 import { IService } from 'remote.it'
-import { newConnection } from '../../helpers/connectionHelper'
+import { Dispatch } from '../../store'
+import { useDispatch } from 'react-redux'
 import { DynamicButton } from '../DynamicButton'
+import { newConnection } from '../../helpers/connectionHelper'
 import { Color } from '../../styling'
 import { Fade } from '@material-ui/core'
 
@@ -19,9 +20,13 @@ export const ConnectButton: React.FC<ConnectButtonProps> = ({
   size = 'medium',
   color = 'success',
 }) => {
+  const { backend } = useDispatch<Dispatch>()
   const hidden = (connection && connection.active) || !service || service.state !== 'active'
   const connecting = !!(connection && connection.pid && !connection.active)
-  const connect = () => Controller.emit('service/connect', connection || newConnection(service))
+  const connect = () =>
+    connection
+      ? backend.update({ ...connection, disabled: false })
+      : backend.add(newConnection(service, { disabled: false }))
 
   return (
     <Fade in={!hidden} timeout={600}>

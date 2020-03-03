@@ -1,5 +1,6 @@
 import React from 'react'
-import Controller from '../../services/Controller'
+import { Dispatch } from '../../store'
+import { useDispatch } from 'react-redux'
 import { DynamicButton } from '../DynamicButton'
 import { Color } from '../../styling'
 import { Fade } from '@material-ui/core'
@@ -17,6 +18,7 @@ export const DisconnectButton: React.FC<Props> = ({
   color = 'primary',
   connection,
 }) => {
+  const { backend } = useDispatch<Dispatch>()
   const hidden = !connection || connection.connecting || !connection.active
   return (
     <Fade in={!hidden} timeout={600}>
@@ -27,7 +29,7 @@ export const DisconnectButton: React.FC<Props> = ({
           color={color}
           disabled={disabled}
           size={size}
-          onClick={() => Controller.emit('service/disconnect', connection)}
+          onClick={() => backend.update({ ...connection, disabled: true })}
         />
       </div>
     </Fade>

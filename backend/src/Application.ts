@@ -2,7 +2,6 @@ import debug from 'debug'
 import Controller from './Controller'
 import ConnectionPool from './ConnectionPool'
 import remoteitInstaller from './remoteitInstaller'
-import cliWS from './CLIWebSocket'
 import binaryInstaller from './binaryInstaller'
 import environment from './environment'
 import Logger from './Logger'
@@ -27,7 +26,6 @@ export default class Application {
     this.bindExitHandlers()
     environment.setElevatedState()
     await this.install()
-    await cliWS.start()
     server.start()
     this.startHeartbeat()
 

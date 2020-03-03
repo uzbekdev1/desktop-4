@@ -82,13 +82,8 @@ function getEventHandlers() {
     connect_error: () => backend.set({ key: 'error', value: true }),
 
     connections: (result: IConnection[]) => {
-      console.log('socket pool', result)
+      console.log('connections set', result)
       backend.set({ key: 'connections', value: result })
-    },
-
-    connection: (result: IConnection) => {
-      console.log('socket connection', result)
-      backend.setConnection(result)
     },
 
     targets: (result: ITarget[]) => {
@@ -137,32 +132,7 @@ function getEventHandlers() {
       backend.set({ key: 'cliError', value: error })
     },
 
-    // Connections
-    'service/started': (msg: ConnectionMessage) => {
-      logs.add({ id: msg.connection.id, log: msg.raw })
-      backend.setConnection(msg.connection)
-    },
-    'service/connected': (msg: ConnectionMessage) => {
-      logs.add({ id: msg.connection.id, log: msg.raw })
-      backend.setConnection(msg.connection)
-    },
-    'service/disconnected': (msg: ConnectionMessage) => {
-      logs.add({ id: msg.connection.id, log: msg.raw })
-      backend.setConnection(msg.connection)
-    },
-    'service/forgotten': (id: string) => console.log(id),
-    'service/error': (msg: ConnectionErrorMessage) => {
-      logs.add({ id: msg.connection.id, log: msg.error })
-      backend.setConnection(msg.connection)
-    },
-    'service/status': (msg: ConnectionMessage) => logs.add({ id: msg.connection.id, log: msg.raw }),
-    'service/uptime': (msg: ConnectionMessage) => console.log('service/uptime', msg),
-    'service/request': (msg: ConnectionMessage) => logs.add({ id: msg.connection.id, log: msg.raw }),
-    'service/tunnel/opened': (msg: ConnectionMessage) => logs.add({ id: msg.connection.id, log: msg.raw }),
-    'service/tunnel/closed': (msg: ConnectionMessage) => logs.add({ id: msg.connection.id, log: msg.raw }),
-    'service/version': (msg: ConnectionMessage) => logs.add({ id: msg.connection.id, log: msg.raw }),
-    'service/unknown-event': (msg: ConnectionMessage) => logs.add({ id: msg.connection.id, log: msg.raw }),
-    // 'service/throughput': (msg: ConnectionMessage) => console.log('service/throughput', msg),
+    logStream: (msg: ILogStream) => logs.add({ id: msg.uid, log: msg.connectdLine }),
 
     // muxer binary
     'binary/install/error': (error: string) => binaries.installError(error),

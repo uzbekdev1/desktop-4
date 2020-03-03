@@ -7,11 +7,4 @@ declare global {
     services?: ITarget[]
     auth?: UserCredentials | undefined
   } & { [key: string]: any }
-
-  type IPayload = {
-    type: string
-    hasError: boolean
-    errorMessage: string
-    data: object
-  }
 }

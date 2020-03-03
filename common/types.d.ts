@@ -15,14 +15,8 @@ declare global {
     // all connections update
     | 'pool'
 
-    // single connection update
-    | 'connection'
-
-    // individual actions
-    | 'service/connect'
-    | 'service/disconnect'
-    | 'service/forget'
-    | 'service/restart'
+    // connections update
+    | 'connections'
 
     // App/settings
     | 'app/open-on-login'
@@ -48,26 +42,9 @@ declare global {
     | 'signed-in'
     | 'sign-in/error'
 
-    // connection pool
-    | 'pool'
-
-    // connection update
+    // connection
     | 'connection'
-
-    // connection events
-    | 'service/started'
-    | 'service/connected'
-    | 'service/disconnected'
-    | 'service/forgotten'
-    | 'service/error'
-    | 'service/status'
-    | 'service/uptime'
-    | 'service/request'
-    | 'service/tunnel/opened'
-    | 'service/tunnel/closed'
-    | 'service/throughput'
-    | 'service/version'
-    | 'service/unknown-event'
+    | 'throughput'
 
     // binary
     | 'binary/install/start'
@@ -112,7 +89,7 @@ declare global {
     restart?: boolean // command to restart an online connection if wanted
 
     // state
-    online: boolean // connected state
+    active?: boolean // connection active state
     connecting?: boolean // connection state
     overProxy?: boolean // connection state
     startTime?: number // unix timestamp connection start time
@@ -125,7 +102,7 @@ declare global {
     pid?: number // deprecated
 
     // Metadata
-    active?: boolean // service active state
+    online: boolean // service online state
     deviceID: string
     username?: string // support for launching where username could be saved
     // deepLink?: string
@@ -176,7 +153,7 @@ declare global {
     protocol: string
   }
 
-  type ISimpleError = { code?: number; message: string }
+  type ISimpleError = { code?: number; message: string; timestamp?: number }
 
   type ILog = { [id: string]: string[] }
 
@@ -191,6 +168,25 @@ declare global {
   type IEvents = { [event: string]: string }
 
   type ILookup = { [key: string]: any }
+
+  type IPayload = {
+    type: string
+    hasError?: boolean
+    errorMessage?: string
+  }
+
+  interface ILogStream extends IPayload {
+    uid: string
+    connectdLine: string
+  }
+
+  interface ICliState extends IPayload {
+    auth: UserCredentials
+    connections: IConnection[]
+    registrationKey: string
+    services: ITarget[]
+    device: IDevice
+  }
 }
 
 export {}

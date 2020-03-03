@@ -38,9 +38,12 @@ export default class Controller {
     new EventRelay(eventNames, EventBus, this.uiIO.sockets)
   }
 
-  authenticated = (socket: SocketIO.Socket) => {
+  authenticated = async (socket: SocketIO.Socket) => {
+    await cliWS.start()
+
     this.bindUi(socket)
     this.bindCLI()
+
     // send the secure data
     this.syncBackend()
   }
@@ -48,13 +51,10 @@ export default class Controller {
   bindUi = (socket: SocketIO.Socket) => {
     socket.on('user/sign-out', user.signOut)
     socket.on('user/quit', this.quit)
-    socket.on('service/connect', this.connect)
-    socket.on('service/disconnect', this.disconnect)
-    socket.on('service/forget', this.forget)
     socket.on('binaries/install', this.installBinaries)
     socket.on('app/open-on-login', this.openOnLogin)
     socket.on('init', this.syncBackend)
-    socket.on('connection', this.connection)
+    socket.on('connections', this.connections)
     socket.on('targets', this.targets)
     socket.on('device', this.device)
     socket.on('scan', this.scan)
@@ -65,15 +65,10 @@ export default class Controller {
   }
 
   bindCLI = () => {
-    cliWS.on('connections', this.connectionsEmit)
-    cliWS.on('freePort', this.freePortEmit)
-
-    // cliWS.on('GetAuth', (response: IPayload) => {
-    //   Logger.info('socket.on-GetAuth', { response: response.data })
-    // })
-    // cliWS.on('SetAuth', (response: IPayload) => {
-    //   Logger.info('socket.on-SetAuth', { response: response.data })
-    // })
+    cliWS.on('connections', this.cliConnections)
+    cliWS.on('freePort', this.cliFreePort)
+    cliWS.on('connectdLogstream', this.cliLogStream)
+    cliWS.on('state', this.cliState)
   }
 
   syncBackend = async () => {
@@ -84,82 +79,68 @@ export default class Controller {
     this.uiIO.emit('admin', (cli.data.admin && cli.data.admin.username) || '')
     this.uiIO.emit(lan.EVENTS.privateIP, lan.privateIP)
     this.uiIO.emit('os', environment.simplesOS)
+    cliWS.emit('state')
     cliWS.emit('freePort', { ip: '127.0.0.1', port: 30000 })
-    // cliWS.emit('auth', { userName: user.username, authHash: user.authHash })
-    // cliWS.emit('connections', { connections: [] })
   }
 
-  connectionsEmit = (response: any) => {
-    Logger.info('CLI WEBSOCKET RECEIVE CONNECTIONS', { response })
-    const connections = response.connections.map((c: any) => ({
+  cliConnections = ({ connections }: { connections: IConnection[] }) => {
+    connections = connections || []
+    Logger.info('CLI WEBSOCKET RECEIVE CONNECTIONS', { connections })
+    const adaptedConnections: IConnection[] = connections.map((c: any) => ({
       ...c,
+      createdTime: c.createdTime || Date.now(),
+      startTime: c.startTime || Date.now(),
       id: c.uid,
+      active: c.online,
+      online: c.active,
       host: c.hostname,
       autoStart: c.retry,
       ...c.metadata,
     }))
-    // let sample = {
-    //   response: {
-    //     type: 'connections',
-    //     connections: [
-    //       {
-    //         uid: '80:00:00:00:01:00:53:AB',
-    //         name: 'Dragon_Craft - Minecraft',
-    //         restriction: '0.0.0.0',
-    //         hostname: '127.0.0.1',
-    //         retry: true,
-    //         failover: true,
-    //         owner: 'jamie@remote.it',
-    //         error: { code: 0, message: '', timestamp: 0 },
-    //         metadata: { deviceID: '80:00:00:00:01:00:53:A2' },
-    //       },
-    //     ],
-    //   },
-    // }
-    this.uiIO.emit('connections', connections)
+    this.uiIO.emit('connections', adaptedConnections)
   }
 
-  freePortEmit = (response: any) => {
+  cliFreePort = (response: any) => {
     Logger.info('CLI WEBSOCKET RECEIVE FREEPORT', { ...response })
     this.uiIO.emit('freePort', response.port)
   }
 
-  connection = (connection: IConnection) => {
-    d('Connection set', connection)
+  cliLogStream = (response: ILogStream) => {
+    const { connectdLine, uid } = response
+    let channel
+    if (!connectdLine) Logger.warn('CLI WEBSOCKET LOG STREAM EMPTY')
+    else if (connectdLine.startsWith('!!status')) channel = ''
+    else if (connectdLine.startsWith('!!throughput')) channel = 'throughput'
+    else {
+      channel = 'logStream'
+      Logger.warn('CLI WEBSOCKET LOG STREAM', { connectdLine, uid })
+    }
+
+    if (channel) this.uiIO.emit(channel, { uid, connectdLine })
+  }
+
+  cliState = (response: { state: ICliState }) => {
+    this.cliConnections(response.state)
+    // @TODO -> use the username and authhash from cli instead of saving and managing in desktop
+    // @TODO -> use the device and services from here instead of reading from config files
+  }
+
+  connections = (connections: IConnection[]) => {
+    d('Connection set', connections)
     // TODO merge into array and send
 
     cliWS.emit('connections', {
-      connections: [
-        {
-          ...connection,
-          uid: connection.id,
-          hostname: connection.host,
-          retry: connection.autoStart,
-          failover: true,
-          metadata: { deviceID: connection.deviceID },
-        },
-      ],
+      connections: connections.map(connection => ({
+        ...connection,
+        uid: connection.id,
+        active: connection.online,
+        online: connection.active,
+        hostname: connection.host,
+        retry: connection.autoStart,
+        failover: true,
+        metadata: { deviceID: connection.deviceID },
+      })),
     })
-  }
-
-  connect = (connection: IConnection) => {
-    Logger.info('CONNECT', { connection })
-    d('Connect:', connection)
-    // TODO make this change in frontend and emit connection
-    connection.disabled = false
-    this.connection(connection)
-  }
-
-  disconnect = (connection: IConnection) => {
-    d('Disconnect Socket:', connection)
-    // TODO update state and add disconnected connection
-    // cliWS.emit('connections', [])
-  }
-
-  forget = (connection: IConnection) => {
-    d('Forget:', connection)
-    // TODO remove iconnection from array and send
-    // cliWS.emit('connections', [])
   }
 
   freePort = (connection: IConnection) => {

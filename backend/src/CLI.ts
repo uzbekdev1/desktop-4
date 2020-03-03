@@ -130,6 +130,7 @@ export default class CLI {
 
   async signIn(admin?: boolean) {
     // if (!user.signedIn) return // can't sign in to cli if the user hasn't signed in yet - can remove because not trying to sudo install cli
+    if (!this.isSignedOut(admin)) return
     await this.exec({ params: ['signin', user.username, '-a', user.authHash, '-j'], admin, checkSignIn: false })
     this.read()
   }

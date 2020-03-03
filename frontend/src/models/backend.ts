@@ -1,5 +1,7 @@
+import Controller from '../services/Controller'
 import { createModel } from '@rematch/core'
 import { DEFAULT_TARGET } from '../constants'
+import { ApplicationState } from '../store'
 
 type IBackendState = { [key: string]: any } & {
   connections: IConnection[]
@@ -35,6 +37,33 @@ const state: IBackendState = {
 
 export default createModel({
   state,
+  effects: (dispatch: any) => ({
+    add(connection: IConnection, rootState: any) {
+      const { connections } = rootState.backend
+      connections.push(connection)
+      Controller.emit('connections', connections)
+    },
+    update(connection: IConnection, rootState: any) {
+      const { connections } = rootState.backend
+
+      connections.some((c: IConnection, index: number) => {
+        if (c.id === connection.id) {
+          connections[index] = connection
+          return true
+        }
+        return false
+      })
+
+      Controller.emit('connections', connections)
+    },
+    remove(connection: IConnection, rootState: any) {
+      const { connections } = rootState.backend
+      Controller.emit(
+        'connections',
+        connections.filter((c: IConnection) => c.id !== connection.id)
+      )
+    },
+  }),
   reducers: {
     set(state: IBackendState, { key, value }: { key: string; value: any }) {
       state[key] = value

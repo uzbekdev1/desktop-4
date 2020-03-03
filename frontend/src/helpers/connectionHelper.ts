@@ -34,12 +34,12 @@ export function setConnection(connection: IConnection) {
     console.warn('Connection missing data. Set failed', connection)
     return false
   }
-  Controller.emit('connection', connection)
+  store.dispatch.backend.update(connection)
 }
 
 export function clearConnectionError(connection: IConnection) {
   delete connection.error
-  Controller.emit('connection', connection)
+  store.dispatch.backend.update(connection)
 }
 
 export function updateConnections(devices: IDevice[]) {

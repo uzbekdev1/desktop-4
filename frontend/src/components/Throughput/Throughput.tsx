@@ -16,16 +16,16 @@ export const Throughput: React.FC<Props> = ({ connection, ...props }) => {
   const css = useStyles()
 
   useEffect(() => {
-    Controller.on('service/throughput', (message: ConnectionMessage) => {
-      if (message.connection.id === connection.id && message.raw) {
-        const [s, r] = parse(message.raw)
+    Controller.on('throughput', ({ uid, connectdLine }: ILogStream) => {
+      if (uid === connection.id && connectdLine) {
+        const [s, r] = parse(connectdLine)
         setSent(s)
         setReceived(r)
       }
     })
 
     return function cleanup() {
-      Controller.off('service/throughput')
+      Controller.off('throughput')
     }
   }, [connection])
 

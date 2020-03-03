@@ -19,19 +19,19 @@ export default class Connection extends EventEmitter {
   private process?: ChildProcess
 
   static EVENTS: { [name: string]: SocketEvent } = {
-    started: 'service/started', // save log for 1yr
-    connected: 'service/connected', // save log for 1yr
-    disconnected: 'service/disconnected', // save log for 1yr
-    forgotten: 'service/forgotten', // save log for 1yr
-    error: 'service/error', // save log for 1yr
-    status: 'service/status',
-    uptime: 'service/uptime',
-    request: 'service/request',
-    tunnelOpened: 'service/tunnel/opened', // save log for 1yr
-    tunnelClosed: 'service/tunnel/closed', // save log for 1yr
-    throughput: 'service/throughput',
-    version: 'service/version',
-    unknown: 'service/unknown-event',
+    // started: 'service/started', // save log for 1yr
+    // connected: 'service/connected', // save log for 1yr
+    // disconnected: 'service/disconnected', // save log for 1yr
+    // forgotten: 'service/forgotten', // save log for 1yr
+    // error: 'service/error', // save log for 1yr
+    // status: 'service/status',
+    // uptime: 'service/uptime',
+    // request: 'service/request',
+    // tunnelOpened: 'service/tunnel/opened', // save log for 1yr
+    // tunnelClosed: 'service/tunnel/closed', // save log for 1yr
+    // throughput: 'service/throughput',
+    // version: 'service/version',
+    // unknown: 'service/unknown-event',
   }
 
   constructor(connection: IConnection) {
