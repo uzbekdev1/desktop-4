@@ -34,14 +34,14 @@ process
     Logger.warn('UNCAUGHT EXCEPTION', { error, details: error.toString() })
     // EventBus.emit(CLI.EVENTS.error, error.toString())
   })
-  .on('unhandledRejection', (reason: Error | any, promise: Promise<any>) => {
-    d('Caught exception', reason, promise)
+  .on('unhandledRejection', (error: Error | any, promise: Promise<any>) => {
+    d('Caught exception', error, promise)
     AirBrake.notify({
       params: { type: 'UNHANDLED PROMISE REJECTION', promise },
-      error: reason,
+      error: error,
     })
-    Logger.warn('UNHANDLED PROMISE REJECTION', { reason, details: reason.toString(), promise })
-    // EventBus.emit(CLI.EVENTS.error, reason.toString())
+    Logger.warn('UNHANDLED PROMISE REJECTION', { details: error.toString(), trace: error.stack, promise })
+    // EventBus.emit(CLI.EVENTS.error, error.toString())
   })
 
 export default new Application()

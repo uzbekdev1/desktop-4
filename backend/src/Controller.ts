@@ -7,6 +7,7 @@ import Logger from './Logger'
 import SocketIO from 'socket.io'
 import EventRelay from './EventRelay'
 import Connection from './Connection'
+import CLIController from './CLIController'
 import binaryInstaller from './binaryInstaller'
 import electronInterface from './electronInterface'
 import environment from './environment'
@@ -19,10 +20,12 @@ import debug from 'debug'
 const d = debug('Controller')
 
 export default class Controller {
-  private uiIO: SocketIO.Server
+  private uiWS: SocketIO.Server
 
-  constructor(uiIO: SocketIO.Server) {
-    this.uiIO = uiIO
+  constructor(uiWS: SocketIO.Server) {
+    this.uiWS = uiWS
+
+    new CLIController(uiWS)
 
     EventBus.on(server.EVENTS.authenticated, this.authenticated)
 
@@ -35,14 +38,11 @@ export default class Controller {
       ...Object.values(electronInterface.EVENTS),
       // ...Object.values(ConnectionPool.EVENTS),
     ]
-    new EventRelay(eventNames, EventBus, this.uiIO.sockets)
+    new EventRelay(eventNames, EventBus, this.uiWS.sockets)
   }
 
   authenticated = async (socket: SocketIO.Socket) => {
-    await cliWS.start()
-
     this.bindUi(socket)
-    this.bindCLI()
 
     // send the secure data
     this.syncBackend()
@@ -64,65 +64,14 @@ export default class Controller {
     socket.on('freePort', this.freePort)
   }
 
-  bindCLI = () => {
-    cliWS.on('connections', this.cliConnections)
-    cliWS.on('freePort', this.cliFreePort)
-    cliWS.on('connectdLogstream', this.cliLogStream)
-    cliWS.on('state', this.cliState)
-  }
-
   syncBackend = async () => {
-    this.uiIO.emit('targets', cli.data.targets)
-    this.uiIO.emit('device', cli.data.device)
-    this.uiIO.emit('scan', lan.data)
-    this.uiIO.emit('interfaces', lan.interfaces)
-    this.uiIO.emit('admin', (cli.data.admin && cli.data.admin.username) || '')
-    this.uiIO.emit(lan.EVENTS.privateIP, lan.privateIP)
-    this.uiIO.emit('os', environment.simplesOS)
-    cliWS.emit('state')
-    cliWS.emit('freePort', { ip: '127.0.0.1', port: 30000 })
-  }
-
-  cliConnections = ({ connections }: { connections: IConnection[] }) => {
-    connections = connections || []
-    Logger.info('CLI WEBSOCKET RECEIVE CONNECTIONS', { connections })
-    const adaptedConnections: IConnection[] = connections.map((c: any) => ({
-      ...c,
-      createdTime: c.createdTime || Date.now(),
-      startTime: c.startTime || Date.now(),
-      id: c.uid,
-      active: c.online,
-      online: c.active,
-      host: c.hostname,
-      autoStart: c.retry,
-      ...c.metadata,
-    }))
-    this.uiIO.emit('connections', adaptedConnections)
-  }
-
-  cliFreePort = (response: any) => {
-    Logger.info('CLI WEBSOCKET RECEIVE FREEPORT', { ...response })
-    this.uiIO.emit('freePort', response.port)
-  }
-
-  cliLogStream = (response: ILogStream) => {
-    const { connectdLine, uid } = response
-    let channel
-    if (!connectdLine) Logger.warn('CLI WEBSOCKET LOG STREAM EMPTY')
-    else if (connectdLine.startsWith('!!status')) channel = ''
-    else if (connectdLine.startsWith('!!throughput')) channel = 'throughput'
-    else {
-      channel = 'logStream'
-      Logger.warn('CLI WEBSOCKET LOG STREAM', { connectdLine, uid })
-    }
-
-    if (channel) this.uiIO.emit(channel, { uid, connectdLine })
-  }
-
-  cliState = (response: { state: ICliState }) => {
-    this.cliConnections(response.state)
-    // @TODO -> use the username and authhash from cli instead of saving and managing in desktop
-    // @TODO -> use the device and services from here instead of reading from config files
+    this.uiWS.emit('targets', cli.data.targets)
+    this.uiWS.emit('device', cli.data.device)
+    this.uiWS.emit('scan', lan.data)
+    this.uiWS.emit('interfaces', lan.interfaces)
+    this.uiWS.emit('admin', (cli.data.admin && cli.data.admin.username) || '')
+    this.uiWS.emit(lan.EVENTS.privateIP, lan.privateIP)
+    this.uiWS.emit('os', environment.simplesOS)
   }
 
   connections = (connections: IConnection[]) => {
@@ -156,23 +105,23 @@ export default class Controller {
 
   targets = async (result: ITarget[]) => {
     await cli.set('targets', result)
-    this.uiIO.emit('targets', cli.data.targets)
+    this.uiWS.emit('targets', cli.data.targets)
   }
 
   device = async (result: IDevice) => {
     await cli.set('device', result)
-    this.uiIO.emit('device', cli.data.device)
-    this.uiIO.emit('targets', cli.data.targets)
+    this.uiWS.emit('device', cli.data.device)
+    this.uiWS.emit('targets', cli.data.targets)
   }
 
   interfaces = async () => {
     await lan.getInterfaces()
-    this.uiIO.emit('interfaces', lan.interfaces)
+    this.uiWS.emit('interfaces', lan.interfaces)
   }
 
   scan = async (interfaceName: string) => {
     await lan.scan(interfaceName)
-    this.uiIO.emit('scan', lan.data)
+    this.uiWS.emit('scan', lan.data)
   }
 
   quit = () => {

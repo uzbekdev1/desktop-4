@@ -1,29 +1,24 @@
 import debug from 'debug'
 import Controller from './Controller'
-import ConnectionPool from './ConnectionPool'
 import remoteitInstaller from './remoteitInstaller'
 import binaryInstaller from './binaryInstaller'
 import environment from './environment'
 import Logger from './Logger'
 import user from './User'
 import server from './server'
-import Tracker from './Tracker'
 import EventBus from './EventBus'
 
 const d = debug('r3:backend:Application')
 
 export default class Application {
   public electron?: any
-  public pool: ConnectionPool
 
   constructor() {
     Logger.info('Application starting up!')
-    this.pool = new ConnectionPool()
     this.constructorSync()
   }
 
   async constructorSync() {
-    this.bindExitHandlers()
     environment.setElevatedState()
     await this.install()
     server.start()
@@ -32,7 +27,6 @@ export default class Application {
     if (server.io) new Controller(server.io)
 
     EventBus.on(user.EVENTS.signedIn, this.check)
-    EventBus.on(user.EVENTS.signedOut, this.handleSignedOut)
   }
 
   quit() {
@@ -71,40 +65,5 @@ export default class Application {
       this.electron && this.electron.check()
       remoteitInstaller.check()
     }
-    this.pool.check()
-  }
-
-  private bindExitHandlers = () => {
-    Tracker.event('app', 'close', 'closing application')
-    // Do something when app is closing
-    process.on('exit', this.handleException)
-
-    // Catches ctrl+c event
-    process.on('SIGINT', this.handleException)
-
-    // Catches "kill pid" (for example: nodemon restart)
-    process.on('SIGUSR1', this.handleException)
-    process.on('SIGUSR2', this.handleException)
-  }
-
-  private handleExit = async () => {
-    this.pool && (await this.pool.stopAll())
-    process.exit()
-  }
-
-  private handleException = async (code: any) => {
-    if (code !== 0) Logger.warn('PROCESS EXCEPTION', { errorCode: code })
-    this.pool && (await this.pool.stopAll())
-  }
-
-  /**
-   * When a user logs out, remove their credentials from the
-   * saved connections file.
-   */
-  private handleSignedOut = async () => {
-    Logger.info('Signing out user')
-
-    // Stop all connections cleanly
-    this.pool && (await this.pool.stopAll())
   }
 }
