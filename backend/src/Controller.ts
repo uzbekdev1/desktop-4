@@ -35,20 +35,24 @@ export default class Controller {
       ...Object.values(Connection.EVENTS),
       ...Object.values(lan.EVENTS),
       ...Object.values(CLI.EVENTS),
+      ...Object.values(server.EVENTS),
       ...Object.values(electronInterface.EVENTS),
       // ...Object.values(ConnectionPool.EVENTS),
     ]
     new EventRelay(eventNames, EventBus, this.uiWS.sockets)
   }
 
-  authenticated = async (socket: SocketIO.Socket) => {
-    this.bindUi(socket)
+  authenticated = () => {
+    this.bindUi()
 
     // send the secure data
     this.syncBackend()
   }
 
-  bindUi = (socket: SocketIO.Socket) => {
+  bindUi = () => {
+    const socket = server.socket
+    if (!socket) throw new Error('Socket.io server failed to start.')
+
     socket.on('user/sign-out', user.signOut)
     socket.on('user/quit', this.quit)
     socket.on('binaries/install', this.installBinaries)
