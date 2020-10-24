@@ -1,5 +1,5 @@
 import React from 'react'
-import { makeStyles, Box, lighten } from '@material-ui/core'
+import { makeStyles, Box, fade } from '@material-ui/core'
 import { spacing, colors, fontSizes, Color } from '../../styling'
 import { SessionsTooltip } from '../SessionsTooltip'
 import { Icon } from '../Icon'
@@ -72,7 +72,7 @@ export const ServiceMiniState: React.FC<Props> = ({ connection, service, setCont
             setOpenTooltip(false)
           }}
         >
-          <span style={{ color, backgroundColor: lighten(color, 0.9) }}>
+          <span style={{ color, backgroundColor: fade(color, 0.1) }}>
             {connected && <Icon name="user" type="solid" size="xxxs" color={colorName} fixedWidth />}
             {failover && <Icon name="cloud" type="solid" size="xxxs" color={colorName} fixedWidth />}
             {service.type}

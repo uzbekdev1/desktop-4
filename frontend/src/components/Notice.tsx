@@ -1,8 +1,7 @@
 import React from 'react'
 import { Icon } from './Icon'
-import { DynamicButton } from '../buttons/DynamicButton'
-import { spacing, colors, fontSizes, Color } from '../styling'
-import { makeStyles, Paper, Box, Button, lighten, darken } from '@material-ui/core'
+import { spacing, colors, fontSizes } from '../styling'
+import { makeStyles, Paper, Box, Button, fade, emphasize } from '@material-ui/core'
 import classnames from 'classnames'
 
 type Props = {
@@ -30,7 +29,7 @@ export const Notice: React.FC<Props> = ({ severity = 'info', link, gutterBottom,
   return (
     <Paper
       elevation={0}
-      style={{ backgroundColor: lighten(color, 0.9), color: darken(color, 0.2) }}
+      style={{ backgroundColor: fade(color, 0.2), color: emphasize(color, 0.3) }}
       className={classnames(css.notice, gutterBottom && css.gutter)}
     >
       <Icon name={icon} size="md" type="regular" />

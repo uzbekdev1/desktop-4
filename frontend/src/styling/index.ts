@@ -1,4 +1,5 @@
-import { PropTypes, lighten } from '@material-ui/core'
+import { PropTypes } from '@material-ui/core'
+const darkTheme = true
 
 export type FontSize = 'bug' | 'xxxs' | 'xxs' | 'xs' | 'sm' | 'base' | 'md' | 'lg' | 'xl' | 'xxl' | 'xxxl' | 'max'
 
@@ -92,12 +93,12 @@ const darkColors: { [key in Color]: string } = {
   grayDarkest: '#bbb',
   white: '#282828',
   black: '#ccc',
-  darken: 'rgba(255,255,255,0.2)',
+  darken: 'rgba(0,0,0,0.5)',
   screen: 'rgba(255,255,255,0.03)',
   rpi: '#C51A4A',
 }
 
-export const colors = darkColors
+export const colors = darkTheme ? darkColors : lightColors
 
 export function muiColor(color?: Color): PropTypes.Color | undefined {
   if (!color) return
