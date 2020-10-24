@@ -5,8 +5,9 @@ const gutters = 32
 const titlePadding = `${spacing.xxs}px ${gutters - 8}px ${spacing.xxs}px ${gutters}px`
 const jssTheme: ThemeOptions = {
   palette: {
-    primary: { main: colors.primary },
-    secondary: { main: colors.secondary, contrastText: colors.white },
+    type: 'dark',
+    primary: { main: colors.primary, contrastText: '#ffffff' },
+    secondary: { main: colors.secondary, contrastText: '#ffffff' },
     error: { main: colors.danger },
   },
   typography: { fontFamily: 'Roboto, san-serif' },

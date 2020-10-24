@@ -26,7 +26,7 @@ const useStyles = makeStyles({
   header: {
     backgroundColor: colors.white,
     position: 'relative',
-    boxShadow: 'rgba(0,0,0,0.15) 0px 1px 2px',
+    boxShadow: `${colors.darken} 0px 1px 2px`,
     zIndex: 2,
   },
 })

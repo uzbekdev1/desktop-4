@@ -1,4 +1,4 @@
-import { PropTypes } from '@material-ui/core'
+import { PropTypes, lighten } from '@material-ui/core'
 
 export type FontSize = 'bug' | 'xxxs' | 'xxs' | 'xs' | 'sm' | 'base' | 'md' | 'lg' | 'xl' | 'xxl' | 'xxxl' | 'max'
 
@@ -43,7 +43,7 @@ export type Color =
   | 'screen'
   | 'rpi'
 
-export const colors: { [key in Color]: string } = {
+export const lightColors: { [key in Color]: string } = {
   primary: '#0096e7',
   primaryLight: '#9ed3f0',
   primaryLighter: '#e7f2f9',
@@ -69,6 +69,35 @@ export const colors: { [key in Color]: string } = {
   screen: 'rgba(0,0,0,0.03)',
   rpi: '#C51A4A',
 }
+
+const darkColors: { [key in Color]: string } = {
+  primary: '#0096e7',
+  primaryLight: '#9ed3f0',
+  primaryLighter: '#e7f2f9',
+  primaryHighlight: '#edf8ff',
+  secondary: '#75bd00',
+  successLight: '#a4db4c',
+  success: '#75bd00',
+  successDark: '#436807',
+  dangerLight: '#e07562',
+  danger: '#d6290a',
+  dangerDark: '#871a06',
+  warning: '#ed9912',
+  grayLightest: '#333',
+  grayLighter: '#444',
+  grayLight: '#555',
+  gray: '#777',
+  grayDark: '#999',
+  grayDarker: '#aaa',
+  grayDarkest: '#bbb',
+  white: '#282828',
+  black: '#ccc',
+  darken: 'rgba(255,255,255,0.2)',
+  screen: 'rgba(255,255,255,0.03)',
+  rpi: '#C51A4A',
+}
+
+export const colors = darkColors
 
 export function muiColor(color?: Color): PropTypes.Color | undefined {
   if (!color) return

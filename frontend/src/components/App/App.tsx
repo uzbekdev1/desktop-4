@@ -137,6 +137,7 @@ export const App: React.FC = () => {
 const useStyles = makeStyles({
   footer: {
     borderTop: `1px solid ${styles.colors.grayLight}`,
+    backgroundColor: styles.colors.white,
     minHeight: 62,
     justifyContent: 'space-evenly',
     '& .MuiButtonBase-root': { maxWidth: '18%' },
