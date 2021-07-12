@@ -14,7 +14,7 @@ export const PromptModal: React.FC<{
 
   useEffect(() => {
     setTokens(toLookup())
-  }, [app])
+  }, [])
 
   return (
     <>

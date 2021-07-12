@@ -12,7 +12,6 @@ import { DialogApp } from '../../components/DialogApp'
 import { Dispatch } from '../../store'
 import { FontSize } from '../../styling'
 import { Icon } from '../../components/Icon'
-import { emit } from '../../services/Controller'
 
 type Props = {
   connection?: IConnection
@@ -34,6 +33,7 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
   const [open, setOpen] = useState<boolean>(false)
   const [openApp, setOpenApp] = useState<boolean>(false)
   const [downloadLink, setDownloadLink] = useState<string>('')
+  const [launchApp, setLaunchApp] = useState<ILaunchApp>()
   const disabled = !connection?.enabled
 
   const app = useApplication('launch', service, connection)
@@ -60,35 +60,33 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
   if (!app) return null
 
   const launchBrowser = () => {
-    let launchApp: ILaunchApp | undefined
     if (launchPutty(service?.typeID)) {
-      launchApp = {
+      setLaunchApp({
         port: app.connection?.port,
         host: app.connection?.host,
         path,
         application: 'putty',
-      }
+      })
     }
     if (launchVNC(service?.typeID)) {
-      launchApp = {
+      setLaunchApp({
         port: app.connection?.port,
         host: app.connection?.host,
         username: app.connection?.username,
         path,
         application: 'vncviewer',
-      }
+      })
     }
     if (launchRemoteDesktop(service?.typeID)) {
-      launchApp = {
+      setLaunchApp({
         port: app.connection?.port,
         host: app.connection?.host,
         username: app.connection?.username,
         path: 'desktop',
         application: 'remoteDesktop',
-      }
+      })
     }
-    launchApp ? emit('launch/app', launchApp) : window.open(app.command)
-    closeAll()
+    setOpenApp(true)
   }
 
   const onSubmit = (tokens: ILookup<string>) => {
@@ -131,7 +129,7 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
         </Tooltip>
       )}
       <PromptModal app={app} open={open} onClose={closeAll} onSubmit={onSubmit} />
-      <DialogApp openApp={openApp} closeAll={closeAll} link={downloadLink} type={service?.type} />
+      <DialogApp launchApp={launchApp} app={app} openApp={openApp} closeAll={closeAll} link={downloadLink} type={service?.type} />
     </>
   )
 }
