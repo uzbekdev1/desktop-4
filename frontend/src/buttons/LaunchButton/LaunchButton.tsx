@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { IconButton, Tooltip, MenuItem, ListItemIcon, ListItemText } from '@material-ui/core'
-import { launchPutty, launchVNC, launchRemoteDesktop, os } from '../../services/Browser'
+import { launchPutty, launchVNC, launchRemoteDesktop, isWindows } from '../../services/Browser'
 import { ApplicationState } from '../../store'
 import { useApplication } from '../../hooks/useApplication'
 import { setConnection } from '../../helpers/connectionHelper'
 import { useSelector } from 'react-redux'
-import { useDispatch } from 'react-redux'
 import { PromptModal } from '../../components/PromptModal'
 import { DataButton } from '../DataButton'
 import { DialogApp } from '../../components/DialogApp'
-import { Dispatch } from '../../store'
-import { FontSize } from '../../styling'
 import { Icon } from '../../components/Icon'
 
 type Props = {
@@ -23,16 +20,13 @@ type Props = {
 }
 
 export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, dataButton, size = 'md', onLaunch }) => {
-  const { requireInstall, loading, path } = useSelector((state: ApplicationState) => ({
-    requireInstall: state.ui.requireInstall,
+  const { loading, path } = useSelector((state: ApplicationState) => ({
     path: state.ui.launchPath,
     loading: state.ui.launchLoading,
   }))
-  const { ui } = useDispatch<Dispatch>()
   const [launch, setLaunch] = useState<boolean>(false)
   const [open, setOpen] = useState<boolean>(false)
   const [openApp, setOpenApp] = useState<boolean>(false)
-  const [downloadLink, setDownloadLink] = useState<string>('')
   const [launchApp, setLaunchApp] = useState<ILaunchApp>()
   const disabled = !connection?.enabled
 
@@ -43,50 +37,42 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
       app.prompt ? setOpen(true) : launchBrowser()
       onLaunch && onLaunch()
     }
-    switch (requireInstall) {
-      case 'putty':
-        setDownloadLink('https://link.remote.it/download/putty')
-        setOpenApp(true)
-        ui.set({ requireInstall: 'none' })
-        break
-      case 'vncviewer':
-        setDownloadLink('https://www.realvnc.com/en/connect/download/viewer/windows/')
-        setOpenApp(true)
-        ui.set({ requireInstall: 'none' })
-        break
-    }
-  }, [requireInstall, launch, app])
+    setOpenApp(true)
+  }, [launch, app])
 
   if (!app) return null
 
+  // windows and mac
   const launchBrowser = () => {
+
+    const hostProps = {
+      port: app.connection?.port,
+      host: app.connection?.host,
+      path,
+    }
+
     if (launchPutty(service?.typeID)) {
       setLaunchApp({
-        port: app.connection?.port,
-        host: app.connection?.host,
-        path,
+        ...hostProps,
         application: 'putty',
       })
     }
     if (launchVNC(service?.typeID)) {
       setLaunchApp({
-        port: app.connection?.port,
-        host: app.connection?.host,
+        ...hostProps,
         username: app.connection?.username,
-        path,
         application: 'vncviewer',
       })
     }
     if (launchRemoteDesktop(service?.typeID)) {
       setLaunchApp({
-        port: app.connection?.port,
-        host: app.connection?.host,
+        ...hostProps,
         username: app.connection?.username,
         path: 'desktop',
         application: 'remoteDesktop',
       })
     }
-    os() === 'windows' ? setOpenApp(true) : window.open(app?.command)
+    isWindows() ? setOpenApp(true) : window.open(app?.command)
   }
 
   const onSubmit = (tokens: ILookup<string>) => {
@@ -129,7 +115,7 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
         </Tooltip>
       )}
       <PromptModal app={app} open={open} onClose={closeAll} onSubmit={onSubmit} />
-      <DialogApp launchApp={launchApp} app={app} openApp={openApp} closeAll={closeAll} link={downloadLink} type={service?.type} />
+      {isWindows() && <DialogApp launchApp={launchApp} app={app} openApp={openApp} closeAll={closeAll} type={service?.type} />}
     </>
   )
 }

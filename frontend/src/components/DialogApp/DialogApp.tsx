@@ -2,18 +2,32 @@ import React from 'react'
 import { Typography, Dialog, DialogActions, Button, Box, Divider, TextField, Grid } from '@material-ui/core'
 import { Application } from '../../shared/applications'
 import { emit } from '../../services/Controller'
+import { ApplicationState, Dispatch } from '../../store'
+import { useDispatch, useSelector } from 'react-redux'
 
 export const DialogApp: React.FC<{
   openApp: boolean
   closeAll: () => void
-  link: string
   type?: string
   app?: Application
   launchApp: ILaunchApp | undefined
-}> = ({ openApp, closeAll, link, type, app, launchApp }) => {
+}> = ({ openApp, closeAll, type, app, launchApp }) => {
+  const { ui } = useDispatch<Dispatch>()
+  const requireInstall = useSelector((state: ApplicationState) => (state.ui.requireInstall))
+
+  const getLinkDownload = () => {
+    ui.set({ requireInstall: 'none' })
+    switch (requireInstall) {
+      case 'putty':
+        return ('https://link.remote.it/download/putty')
+      case 'vncviewer':
+        return 'https://www.realvnc.com/en/connect/download/viewer/windows/'
+    }
+  }
+
   const App = type === 'VNC' ? 'VNC Viewer' : 'Putty'
   const getApp = () => {
-    launchApp ? emit('launch/app', launchApp) : window.open(link)
+    launchApp ? emit('launch/app', launchApp) : window.open(getLinkDownload())
     closeAll()
   }
   const launchBrowser = () => {
@@ -22,6 +36,7 @@ export const DialogApp: React.FC<{
   }
   const title = launchApp ? ` ${type} connections ` : ` Please install ${App} to launch ${type} connections.`
   const buttonText = launchApp ? `  launch ${App} ` : ` Download ${App} `
+
   return (
     <>
       <Dialog open={openApp} onClose={closeAll} maxWidth="xs" fullWidth>
