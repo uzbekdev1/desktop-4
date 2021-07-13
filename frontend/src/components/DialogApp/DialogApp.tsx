@@ -17,7 +17,6 @@ export const DialogApp: React.FC<{
     closeAll()
   }
   const launchBrowser = () => {
-    console.log("test")
     window.open(app?.command)
     closeAll()
   }

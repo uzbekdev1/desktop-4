@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { IconButton, Tooltip, MenuItem, ListItemIcon, ListItemText } from '@material-ui/core'
-import { launchPutty, launchVNC, launchRemoteDesktop } from '../../services/Browser'
+import { launchPutty, launchVNC, launchRemoteDesktop, os } from '../../services/Browser'
 import { ApplicationState } from '../../store'
 import { useApplication } from '../../hooks/useApplication'
 import { setConnection } from '../../helpers/connectionHelper'
@@ -86,7 +86,7 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
         application: 'remoteDesktop',
       })
     }
-    setOpenApp(true)
+    os() === 'windows' ? setOpenApp(true) : window.open(app?.command)
   }
 
   const onSubmit = (tokens: ILookup<string>) => {
