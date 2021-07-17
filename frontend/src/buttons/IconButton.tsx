@@ -22,12 +22,12 @@ type Props = {
 export const IconButton: React.FC<Props> = ({
   title,
   icon,
-  size = 'base',
   disabled,
   to,
   color,
   type = 'regular',
   shiftDown,
+  size = 'base',
   className,
   onMouseEnter,
   onMouseLeave,
@@ -48,7 +48,7 @@ export const IconButton: React.FC<Props> = ({
       className={className}
       style={{ opacity: disabled ? 0.5 : undefined, marginBottom: shiftDown ? -spacing.sm : undefined }}
     >
-      <Icon {...props} name={icon} color={color} type={type} size={size} />
+      <Icon {...props} name={icon} color={color} type={type} size={size} fixedWidth />
     </MuiIconButton>
   )
 

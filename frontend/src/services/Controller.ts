@@ -115,6 +115,7 @@ function getEventHandlers() {
       store.dispatch.licensing.init()
       await cloudController.init()
       await store.dispatch.accounts.init()
+      await store.dispatch.organization.init()
       await store.dispatch.devices.init()
       await store.dispatch.ui.init()
       await store.dispatch.devices.fetch()

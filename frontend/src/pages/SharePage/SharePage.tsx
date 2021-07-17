@@ -131,30 +131,28 @@ export const SharePage: React.FC<{ device?: IDevice }> = ({ device }) => {
     <Container
       header={
         <>
-          <Typography variant="h1">
-            {email ? (
-              <>
-                <Title>{email || 'Share'}</Title>
-                {deleting ? (
-                  <CircularProgress className={css.loading} size={styles.fontSizes.md} />
-                ) : (
-                  <Tooltip title={`Remove ${email}`}>
-                    <IconButton onClick={handleUnshare} disabled={deleting}>
-                      <Icon name="trash" size="md" fixedWidth />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </>
-            ) : (
-              device && (
-                <ContactSelector
-                  contacts={contacts}
-                  selected={contacts.filter(c => device.access.find(s => s.email === c.email))}
-                  onChange={selectContacts}
-                />
-              )
-            )}
-          </Typography>
+          {email ? (
+            <Typography variant="h1">
+              <Title>{email || 'Share'}</Title>
+              {deleting ? (
+                <CircularProgress className={css.loading} size={styles.fontSizes.md} />
+              ) : (
+                <Tooltip title={`Remove ${email}`}>
+                  <IconButton onClick={handleUnshare} disabled={deleting}>
+                    <Icon name="trash" size="md" fixedWidth />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Typography>
+          ) : (
+            device && (
+              <ContactSelector
+                contacts={contacts}
+                selected={contacts.filter(c => device.access.find(s => s.email === c.email))}
+                onChange={selectContacts}
+              />
+            )
+          )}
         </>
       }
     >
