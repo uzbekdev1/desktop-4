@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { IconButton, Tooltip, MenuItem, ListItemIcon, ListItemText } from '@material-ui/core'
 import { launchPutty, launchVNC, launchRemoteDesktop, isWindows } from '../../services/Browser'
-import { ApplicationState } from '../../store'
+import { ApplicationState, Dispatch } from '../../store'
 import { useApplication } from '../../hooks/useApplication'
 import { setConnection } from '../../helpers/connectionHelper'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { PromptModal } from '../../components/PromptModal'
 import { DataButton } from '../DataButton'
 import { DialogApp } from '../../components/DialogApp'
@@ -20,25 +20,26 @@ type Props = {
 }
 
 export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, dataButton, size = 'md', onLaunch }) => {
-  const { loading, path } = useSelector((state: ApplicationState) => ({
+  const { ui } = useDispatch<Dispatch>()
+
+  const { loading, path, launchState } = useSelector((state: ApplicationState) => ({
     path: state.ui.launchPath,
     loading: state.ui.launchLoading,
+    launchState: state.ui.launchState
   }))
-  const [launch, setLaunch] = useState<boolean>(false)
-  const [open, setOpen] = useState<boolean>(false)
-  const [openApp, setOpenApp] = useState<boolean>(false)
+
   const [launchApp, setLaunchApp] = useState<ILaunchApp>()
   const disabled = !connection?.enabled
 
   const app = useApplication('launch', service, connection)
 
   useEffect(() => {
-    if (launch) {
-      app.prompt ? setOpen(true) : launchBrowser()
+    if (launchState?.launch) {
+      app.prompt ? ui.updateLaunchState({ open: true }) : launchBrowser()
       onLaunch && onLaunch()
     }
-    setOpenApp(true)
-  }, [launch, app])
+    ui.updateLaunchState({ openApp: true })
+  }, [launchState?.launch, app])
 
   if (!app) return null
 
@@ -72,7 +73,7 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
         application: 'remoteDesktop',
       })
     }
-    isWindows() ? setOpenApp(true) : window.open(app?.command)
+    isWindows() ? ui.updateLaunchState({ openApp: true }) : window.open(app?.command)
   }
 
   const onSubmit = (tokens: ILookup<string>) => {
@@ -80,12 +81,10 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
   }
 
   const closeAll = () => {
-    setLaunch(false)
-    setOpen(false)
-    setOpenApp(false)
+    ui.updateLaunchState({ openApp: false, open: false, launch: false })
   }
 
-  const clickHandler = () => setLaunch(true)
+  const clickHandler = () => ui.updateLaunchState({ launch: true })
 
   const LaunchIcon = (
     <Icon
@@ -114,8 +113,8 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
           </IconButton>
         </Tooltip>
       )}
-      <PromptModal app={app} open={open} onClose={closeAll} onSubmit={onSubmit} />
-      {isWindows() && <DialogApp launchApp={launchApp} app={app} openApp={openApp} closeAll={closeAll} type={service?.type} />}
+      <PromptModal app={app} open={launchState.open} onClose={closeAll} onSubmit={onSubmit} />
+      {isWindows() && <DialogApp launchApp={launchApp} app={app} type={service?.type} />}
     </>
   )
 }
