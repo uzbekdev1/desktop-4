@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { IconButton, Tooltip, MenuItem, ListItemIcon, ListItemText } from '@material-ui/core'
-import { launchPutty, launchVNC, launchRemoteDesktop, isWindows } from '../../services/Browser'
+import { isWindows, getApplicationObj } from '../../services/Browser'
 import { ApplicationState, Dispatch } from '../../store'
 import { useApplication } from '../../hooks/useApplication'
 import { setConnection } from '../../helpers/connectionHelper'
@@ -9,6 +9,7 @@ import { PromptModal } from '../../components/PromptModal'
 import { DataButton } from '../DataButton'
 import { DialogApp } from '../../components/DialogApp'
 import { Icon } from '../../components/Icon'
+import { emit } from '../../services/Controller'
 
 type Props = {
   connection?: IConnection
@@ -30,50 +31,38 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
 
   const [launchApp, setLaunchApp] = useState<ILaunchApp>()
   const disabled = !connection?.enabled
-
+  const [openLaunchApplication, setOpenLaunchApplication] = useState<boolean>(false)
   const app = useApplication('launch', service, connection)
 
   useEffect(() => {
-    if (launchState?.launch) {
-      app.prompt ? ui.updateLaunchState({ open: true }) : launchBrowser()
-      onLaunch && onLaunch()
+    if (openLaunchApplication && !loading) {
+      launchApplication()
+      setOpenLaunchApplication(false)
     }
-    ui.updateLaunchState({ openApp: true })
-  }, [launchState?.launch, app])
+  }, [loading])
+
+  useEffect(() => {
+    return () => closeAll()
+  }, [])
 
   if (!app) return null
 
-  // windows and mac
-  const launchBrowser = () => {
+  const launchApplication = () => {
 
+    const applicationObj = getApplicationObj(service?.typeID, app.connection?.username)
     const hostProps = {
       port: app.connection?.port,
       host: app.connection?.host,
       path,
     }
-
-    if (launchPutty(service?.typeID)) {
+    if (applicationObj?.application) {
       setLaunchApp({
         ...hostProps,
-        application: 'putty',
+        ...applicationObj
       })
     }
-    if (launchVNC(service?.typeID)) {
-      setLaunchApp({
-        ...hostProps,
-        username: app.connection?.username,
-        application: 'vncviewer',
-      })
-    }
-    if (launchRemoteDesktop(service?.typeID)) {
-      setLaunchApp({
-        ...hostProps,
-        username: app.connection?.username,
-        path: 'desktop',
-        application: 'remoteDesktop',
-      })
-    }
-    isWindows() ? ui.updateLaunchState({ openApp: true }) : window.open(app?.command)
+    ui.updateLaunchState({ openApp: true })
+    onLaunch && onLaunch()
   }
 
   const onSubmit = (tokens: ILookup<string>) => {
@@ -84,7 +73,18 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
     ui.updateLaunchState({ openApp: false, open: false, launch: false })
   }
 
-  const clickHandler = () => ui.updateLaunchState({ launch: true })
+  const clickHandler = () => {
+    if (isWindows()) {
+      const applicationObj = getApplicationObj(service?.typeID, app.connection?.username)
+      console.log({ applicationObj })
+      ui.set({ launchLoading: true })
+      emit('check/app', applicationObj?.application)// requireInstall "" // "putty"
+      setOpenLaunchApplication(true)
+    } else {
+      window.open(app.command)
+    }
+
+  }
 
   const LaunchIcon = (
     <Icon

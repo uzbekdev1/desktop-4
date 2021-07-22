@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Typography, Dialog, DialogActions, Button, Box, Divider, Grid } from '@material-ui/core'
 import { Application } from '../../shared/applications'
 import { emit } from '../../services/Controller'
@@ -14,7 +14,6 @@ export const DialogApp: React.FC<{
   const { requireInstall, openApp } = useSelector((state: ApplicationState) => ({
     requireInstall: state.ui.requireInstall,
     openApp: state.ui.launchState.openApp
-
   }))
 
   const closeAll = () => {
@@ -33,15 +32,16 @@ export const DialogApp: React.FC<{
 
   const App = type === 'VNC' ? 'VNC Viewer' : 'Putty'
   const getApp = () => {
-    launchApp ? emit('launch/app', launchApp) : window.open(getLinkDownload())
+    console.log("require install: ", requireInstall)
+    !requireInstall && requireInstall !== 'none' ? emit('launch/app', launchApp) : window.open(getLinkDownload())
     closeAll()
   }
   const launchBrowser = () => {
     window.open(app?.command)
     closeAll()
   }
-  const title = launchApp ? ` ${type} connections ` : ` Please install ${App} to launch ${type} connections.`
-  const buttonText = launchApp ? `  launch ${App} ` : ` Download ${App} `
+  const title = requireInstall !== '' ? ` ${type} connections ` : ` Please install ${App} to launch ${type} connections.`
+  const buttonText = requireInstall !== '' ? `  launch ${App} ` : ` Download ${App} `
 
   return (
     <>

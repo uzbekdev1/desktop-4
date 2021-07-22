@@ -14,7 +14,6 @@ const EVENTS = {
 export const openCMDforWindows = (launchApp: ILaunchApp) => {
   if (launchApp.path) return launchApplication(launchApp.path, launchApp)
 
-  EventBus.emit(EVENTS.notInstalled, { install: 'none', loading: true })
   Logger.info('LAUNCH APP', { launchApp })
   const process = child_process.exec(`DIR /S ${launchApp.application}.exe /B`, { cwd: 'C:\\' })
 
@@ -33,18 +32,16 @@ export const openCMDforWindows = (launchApp: ILaunchApp) => {
   process.on('close', (code: any) => {
     Logger.info(`child process exited with code ${code}`)
   })
+}
 
-  child_process.exec(
-    `where ${launchApp.application}`,
-    { cwd: 'C:\\' },
-    (error: any, stdout: any, stderr: any) => {
-      error && Logger.error(`error: ${error}`)
-      Logger.info(`RESULT ${launchApp.application}`, { stdout, stderr })
-      if (!stdout.trim()) {
-        EventBus.emit(EVENTS.notInstalled, { install: `${launchApp.application}`, loading: false })
-      }
+export const checkAppForWindows = (application: string) => {
+  child_process.exec(`where ${application}`, { cwd: 'C:\\' }, (error: any, stdout: any, stderr: any) => {
+    error && Logger.error(`error: ${error}`)
+    Logger.info(`RESULT ${application}`, { stdout, stderr })
+    if (!stdout.trim()) {
+      EventBus.emit(EVENTS.notInstalled, { install: `${application}`, loading: false })
     }
-  )
+  })
 }
 
 function launchApplication(cwd: string, launchApp: ILaunchApp) {
