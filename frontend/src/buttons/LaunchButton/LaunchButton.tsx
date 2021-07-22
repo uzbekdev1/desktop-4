@@ -76,8 +76,7 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
   const clickHandler = () => {
     if (isWindows()) {
       const applicationObj = getApplicationObj(service?.typeID, app.connection?.username)
-      console.log({ applicationObj })
-      ui.set({ launchLoading: true })
+      ui.set({ launchLoading: true, requireInstall: 'none' })
       emit('check/app', applicationObj?.application)// requireInstall "" // "putty"
       setOpenLaunchApplication(true)
     } else {

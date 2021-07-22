@@ -40,6 +40,8 @@ export const checkAppForWindows = (application: string) => {
     Logger.info(`RESULT ${application}`, { stdout, stderr })
     if (!stdout.trim()) {
       EventBus.emit(EVENTS.notInstalled, { install: `${application}`, loading: false })
+    } else {
+      EventBus.emit(EVENTS.notInstalled, { install: `none`, loading: false })
     }
   })
 }
