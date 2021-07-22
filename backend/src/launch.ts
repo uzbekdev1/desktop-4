@@ -35,13 +35,31 @@ export const openCMDforWindows = (launchApp: ILaunchApp) => {
 }
 
 export const checkAppForWindows = (application: string) => {
-  child_process.exec(`where ${application}`, { cwd: 'C:\\' }, (error: any, stdout: any, stderr: any) => {
-    error && Logger.error(`error: ${error}`)
-    Logger.info(`RESULT ${application}`, { stdout, stderr })
-    if (!stdout.trim()) {
+  let foundData = false
+  const options = {
+    timeout: 3000,
+    killSignal: 'SIGKILL',
+  }
+  const process = child_process.exec(`DIR /S ${application}.exe /B`, { ...options, cwd: 'C:\\' })
+
+  process.stdout.on('data', (data: string) => {
+    foundData = true
+    Logger.info(`stdout: ${data}`)
+    if (!data.trim()) {
       EventBus.emit(EVENTS.notInstalled, { install: `${application}`, loading: false })
     } else {
       EventBus.emit(EVENTS.notInstalled, { install: `none`, loading: false })
+    }
+  })
+
+  process.stderr.on('data', (data: string) => {
+    Logger.error(`stderr: ${data}`)
+  })
+
+  process.on('close', (code: any) => {
+    Logger.info(`child process exited with code test ${code}`)
+    if (!foundData) {
+      EventBus.emit(EVENTS.notInstalled, { install: `${application}`, loading: false })
     }
   })
 }
