@@ -75,4 +75,6 @@ export function getApplicationObj(typeID?: number, username?: string) {
       application: 'remoteDesktop',
     }
   }
+
+  return { application: '' }
 }

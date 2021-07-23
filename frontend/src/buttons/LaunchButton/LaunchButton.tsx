@@ -67,24 +67,35 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
 
   const onSubmit = (tokens: ILookup<string>) => {
     connection && setConnection({ ...connection, ...tokens })
+    ui.updateLaunchState({ open: false })
+    onOpenApp()
+  }
+
+  const clickHandler = () => {
+    if (app.missingTokens.length > 0) {
+      ui.updateLaunchState({ open: true })
+      return
+    }
+    onOpenApp()
   }
 
   const closeAll = () => {
     ui.updateLaunchState({ openApp: false, open: false, launch: false })
   }
 
-  const clickHandler = () => {
-    if (isWindows()) {
+  const onOpenApp = () => {
+
+    const applicationObj = getApplicationObj(service?.typeID, app.connection?.username)
+
+    if (isWindows() && applicationObj.application !== '') {
       const applicationObj = getApplicationObj(service?.typeID, app.connection?.username)
+
       ui.set({ launchLoading: true, requireInstall: 'none' })
       emit('check/app', applicationObj?.application)
       setOpenLaunchApplication(true)
+
     } else {
-      if (app.missingTokens.length > 0) {
-        ui.updateLaunchState({ open: true })
-      } else {
-        window.open(app.command)
-      }
+      window.open(app.command)
     }
 
   }

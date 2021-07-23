@@ -30,18 +30,19 @@ export const DialogApp: React.FC<{
     }
   }
 
+  const requireDownloadApp = () => !requireInstall || requireInstall !== 'none'
+
   const App = type === 'VNC' ? 'VNC Viewer' : 'Putty'
   const getApp = () => {
-    console.log("require install: ", requireInstall)
-    !requireInstall && requireInstall !== 'none' ? emit('launch/app', launchApp) : window.open(getLinkDownload())
+    requireDownloadApp() ? window.open(getLinkDownload()) : emit('launch/app', launchApp)
     closeAll()
   }
   const launchBrowser = () => {
     window.open(app?.command)
     closeAll()
   }
-  const title = requireInstall !== '' ? ` ${type} connections ` : ` Please install ${App} to launch ${type} connections.`
-  const buttonText = requireInstall !== '' ? `  launch ${App} ` : ` Download ${App} `
+  const title = requireDownloadApp() ? ` Please install ${App} to launch ${type} connections.` : ` ${type} connections `
+  const buttonText = requireDownloadApp() ? ` Download ${App} ` : `  launch ${App} `
 
   return (
     <>
