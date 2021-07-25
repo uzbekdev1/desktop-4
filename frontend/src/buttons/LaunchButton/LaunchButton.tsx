@@ -68,11 +68,12 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
   const onSubmit = (tokens: ILookup<string>) => {
     connection && setConnection({ ...connection, ...tokens })
     ui.updateLaunchState({ open: false })
-    onOpenApp()
+    // here is using preview because we don't know when setConnection respond with the socket emit 
+    onOpenApp(app.preview(tokens))
   }
 
   const clickHandler = () => {
-    if (app.missingTokens.length > 0) {
+    if (app.prompt > 0) {
       ui.updateLaunchState({ open: true })
       return
     }
@@ -83,10 +84,8 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
     ui.updateLaunchState({ openApp: false, open: false, launch: false })
   }
 
-  const onOpenApp = () => {
-
+  const onOpenApp = (command?: string) => {
     const applicationObj = getApplicationObj(service?.typeID, app.connection?.username)
-
     if (isWindows() && applicationObj.application !== '') {
       const applicationObj = getApplicationObj(service?.typeID, app.connection?.username)
 
@@ -95,7 +94,7 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
       setOpenLaunchApplication(true)
 
     } else {
-      window.open(app.command)
+      window.open(command || app.command)
     }
 
   }
