@@ -1,87 +1,70 @@
 import Logger from './Logger'
 import EventBus from './EventBus'
-const child_process = require('child_process')
+import Command from './Command'
 
 const EVENTS = {
   notInstalled: 'required/app',
   minimizeWindows: 'windows/minimize',
 }
 
-/* 
-  @FIXME - these commands should all use the Command.ts class
-*/
-
-export const openCMDforWindows = (launchApp: ILaunchApp) => {
-  if (launchApp.path) return launchApplication(launchApp.path, launchApp)
-
+export const openCMDforWindows = async (launchApp: ILaunchApp) => {
+  if (launchApp.path) return launchApplication(launchApp)
   Logger.info('LAUNCH APP', { launchApp })
-  const process = child_process.exec(`DIR /S ${launchApp.application}.exe /B`, { cwd: 'C:\\' })
-
-  process.stdout.on('data', (data: string) => {
-    Logger.info(`stdout: ${data}`)
-    Logger.info(`stdout: ${data.replace(`\\${launchApp.application}.exe`, ``).replace(/\\/g, '\\\\')}`)
-    const cwd = data.replace(`\\${launchApp.application}.exe`, ``).replace(/\\/g, '\\\\').trim()
-    EventBus.emit(EVENTS.notInstalled, { install: 'none', loading: false, path: cwd })
-    launchApplication(cwd, launchApp)
-  })
-
-  process.stderr.on('data', (data: string) => {
-    Logger.info(`stderr: ${data}`)
-  })
-
-  process.on('close', (code: any) => {
-    Logger.info(`child process exited with code ${code}`)
-  })
-}
-
-export const checkAppForWindows = (application: string) => {
-  let foundData = false
-  const options = {
-    timeout: 3000,
-    killSignal: 'SIGKILL',
+  const commands = new Command({ admin: true })
+  commands.push(`where ${launchApp.application}.exe`)
+  const result = await commands.exec()
+  if (result) {
+    try {
+      if (result.includes('Command failed:')) {
+        EventBus.emit(EVENTS.notInstalled, { install: `${launchApp.application}`, loading: false })
+      } else {
+        launchApplication(launchApp)
+      }
+    } catch (error) {
+      Logger.warn('OPEN APP ON WINDOWS ERROR', { result, errorMessage: error.message.toString() })
+    }
   }
-  const process = child_process.exec(`DIR /S ${application}.exe /B`, { ...options, cwd: 'C:\\' })
-
-  process.stdout.on('data', (data: string) => {
-    foundData = true
-    Logger.info(`stdout: ${data}`)
-    if (!data.trim()) {
-      EventBus.emit(EVENTS.notInstalled, { install: `${application}`, loading: false })
-    } else {
-      EventBus.emit(EVENTS.notInstalled, { install: `none`, loading: false })
-    }
-  })
-
-  process.stderr.on('data', (data: string) => {
-    Logger.error(`stderr: ${data}`)
-  })
-
-  process.on('close', (code: any) => {
-    Logger.info(`child process exited with code test ${code}`)
-    if (!foundData) {
-      EventBus.emit(EVENTS.notInstalled, { install: `${application}`, loading: false })
-    }
-  })
 }
 
-function launchApplication(cwd: string, launchApp: ILaunchApp) {
-  let command = ''
+export const checkAppForWindows = async (application: string) => {
+  const commands = new Command({ admin: true })
+  commands.push(`cd c:\\`)
+  commands.push(`where ${application}.exe`)
+  const result = await commands.exec()
+  Logger.info('CHECK APP EXISTS: ', { result })
+  if (result.includes('Command failed:')) {
+    EventBus.emit(EVENTS.notInstalled, { install: `${application}`, loading: false })
+  } else {
+    EventBus.emit(EVENTS.notInstalled, { install: `none`, loading: false })
+  }
+}
+
+async function launchApplication(launchApp: ILaunchApp) {
+  const commands = new Command({ admin: true })
   switch (launchApp.application) {
     case 'putty':
-      command = `start ${launchApp.application}.exe -ssh ${launchApp.host} ${launchApp.port}`
+      commands.push(`start ${launchApp.application}.exe -ssh ${launchApp.host} ${launchApp.port}`)
       break
     case 'vncviewer':
-      command = `start ${launchApp.application}.exe -Username ${launchApp.username} ${launchApp.host}:${launchApp.port}`
+      commands.push(
+        `start ${launchApp.application}.exe -Username ${launchApp.username} ${launchApp.host}:${launchApp.port}`
+      )
       break
     case 'remoteDesktop':
-      command = `cmdkey /generic:${launchApp.host} /user:${launchApp.username} && 
-        mstsc /v: ${launchApp.host} &&
-        cmdkey /delete:TERMSRV/${launchApp.host}`
+      commands.push(`cmdkey /generic:${launchApp.host} /user:${launchApp.username}`)
+      commands.push(`mstsc /v: ${launchApp.host}`)
+      commands.push(`cmdkey /delete:TERMSRV/${launchApp.host}`)
       break
   }
-  child_process.exec(`${command}`, { cwd }, (error: any) => {
-    error && Logger.error(`error: ${error}`)
-  })
+  const result = await commands.exec()
+  if (result) {
+    try {
+      const parsed = JSON.parse(result)
+      return parsed.data
+    } catch (error) {
+      Logger.warn('LAUNCH APP PARSE ERROR', { result, errorMessage: error.message.toString() })
+    }
+  }
 }
 
 export default { EVENTS }
