@@ -16,6 +16,11 @@ export function os() {
   return 'linux'
 }
 
+export function agent() {
+  const result = navigator.userAgent.match(/\(.*?\)/)
+  return result?.length ? result[0] : ''
+}
+
 export function isRemote() {
   const { port, hostname } = window.location
   return !(isElectron() || ((port === '29999' || port === '29998') && hostname === IP_PRIVATE))

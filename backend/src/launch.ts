@@ -10,7 +10,7 @@ const EVENTS = {
 export const openCMDforWindows = async (launchApp: ILaunchApp) => {
   if (launchApp.path) return launchApplication(launchApp)
   Logger.info('LAUNCH APP', { launchApp })
-  const commands = new Command({ admin: true })
+  const commands = new Command({})
   commands.push(`where ${launchApp.application}.exe`)
   const result = await commands.exec()
   if (result) {
@@ -27,7 +27,7 @@ export const openCMDforWindows = async (launchApp: ILaunchApp) => {
 }
 
 export const checkAppForWindows = async (application: string) => {
-  const commands = new Command({ admin: true })
+  const commands = new Command({})
   commands.push(`cd c:\\`)
   commands.push(`where ${application}.exe`)
   const result = await commands.exec()
@@ -40,7 +40,7 @@ export const checkAppForWindows = async (application: string) => {
 }
 
 async function launchApplication(launchApp: ILaunchApp) {
-  const commands = new Command({ admin: true })
+  const commands = new Command({})
   switch (launchApp.application) {
     case 'putty':
       commands.push(`start ${launchApp.application}.exe -ssh ${launchApp.host} ${launchApp.port}`)

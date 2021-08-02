@@ -10,6 +10,7 @@ import { DataButton } from '../DataButton'
 import { DialogApp } from '../../components/DialogApp'
 import { Icon } from '../../components/Icon'
 import { emit } from '../../services/Controller'
+import { Color, FontSize } from '../../styling'
 
 type Props = {
   connection?: IConnection
@@ -17,10 +18,14 @@ type Props = {
   menuItem?: boolean
   dataButton?: boolean
   size?: FontSize
+  color?: Color
+  type?: IconType
+  onMouseEnter?: () => void
+  onMouseLeave?: () => void
   onLaunch?: () => void
 }
 
-export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, dataButton, size = 'md', onLaunch }) => {
+export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, dataButton, size = 'md', color, type, onLaunch, onMouseEnter, onMouseLeave }) => {
   const { ui } = useDispatch<Dispatch>()
 
   const { loading, path, launchState } = useSelector((state: ApplicationState) => ({
@@ -45,7 +50,7 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
     return () => closeAll()
   }, [])
 
-  if (!app) return null
+  if (!app || !connection?.enabled) return null
 
   const launchApplication = () => {
 
@@ -100,28 +105,27 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
   }
 
   const LaunchIcon = (
-    <Icon
-      rotate={app.iconRotate ? -45 : undefined}
-      name={loading ? 'spinner-third' : app.icon}
-      spin={loading}
-      size={size}
-    />
+    <Icon name={loading ? 'spinner-third' : app.icon} spin={loading} size={size} color={color} type={type} fixedWidth />
   )
-
-  const title = `Launch ${app.title}`
 
   return (
     <>
       {menuItem ? (
-        <MenuItem dense onClick={clickHandler} disabled={loading || disabled}>
+        <MenuItem dense onClick={clickHandler} disabled={disabled || loading}>
           <ListItemIcon>{LaunchIcon}</ListItemIcon>
-          <ListItemText primary={title} />
+          <ListItemText primary={app.contextTitle} />
         </MenuItem>
       ) : dataButton ? (
-        <DataButton label={title} value={app.command} title={title} icon={LaunchIcon} onClick={clickHandler} />
+        <DataButton
+          value={app.command}
+          label={app.contextTitle}
+          title={app.contextTitle}
+          icon={LaunchIcon}
+          onClick={clickHandler}
+        />
       ) : (
-        <Tooltip title={title}>
-          <IconButton onClick={clickHandler} disabled={loading || disabled}>
+        <Tooltip title={app.contextTitle}>
+          <IconButton onClick={clickHandler} disabled={loading} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
             {LaunchIcon}
           </IconButton>
         </Tooltip>
