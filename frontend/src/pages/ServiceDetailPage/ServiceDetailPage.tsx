@@ -64,9 +64,6 @@ export const ServiceDetailPage: React.FC<{ device?: IDevice; targets: ITarget[] 
                 )}
               </Gutters>
             </GuideStep>
-            <Gutters>
-              <ConnectionDetails connection={connection} show={connection?.enabled} service={service} />
-            </Gutters>
           </>
         )
       }
