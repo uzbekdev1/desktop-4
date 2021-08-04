@@ -40,6 +40,7 @@ export const checkAppForWindows = async (application: string) => {
 }
 
 async function launchApplication(launchApp: ILaunchApp) {
+  // use defaultTemplateCmd
   const commands = new Command({})
   switch (launchApp.application) {
     case 'putty':

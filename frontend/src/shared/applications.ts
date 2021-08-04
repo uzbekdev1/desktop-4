@@ -15,6 +15,7 @@ export class Application {
   launchIcon: string = 'launch'
   commandIcon: string = 'terminal'
   publicTemplate: string = '[address]'
+  defaultTemplateCmd: string = ''
   addressTemplate: string = '[host]:[port]'
   defaultLaunchTemplate: string = 'http://[host]:[port]'
   defaultCommandTemplate: string = '[host]:[port]'
@@ -159,6 +160,7 @@ function getApplicationType(typeID?: number) {
         title: 'SSH',
         defaultLaunchTemplate: 'ssh://[username]@[host]:[port]',
         defaultCommandTemplate: 'ssh -l [username] [host] -p [port]',
+        defaultTemplateCmd: 'start putty.exe -ssh [host] [port]',
         //'ssh -l [username] [host] -p [port] -o "NoHostAuthenticationForLocalhost=yes"',
       })
     case 8:
