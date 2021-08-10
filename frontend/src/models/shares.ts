@@ -27,15 +27,10 @@ export default createModel<RootModel>()({
       const { deviceId, email } = userDevice
       const { set } = dispatch.shares
       set({ deleting: true })
-      try {
-        const response = await graphQLUnShareDevice({ deviceId, email: [email] })
-        const errors = graphQLGetErrors(response)
-        if (!errors) {
-          await dispatch.devices.fetchSingle({ id: deviceId })
-          dispatch.ui.set({ successMessage: `${email} successfully removed.` })
-        }
-      } catch (error) {
-        await graphQLCatchError(error)
+      const response = await graphQLUnShareDevice({ deviceId, email: [email] })
+      if (response !== 'ERROR') {
+        await dispatch.devices.fetchSingle({ id: deviceId })
+        dispatch.ui.set({ successMessage: `${email} successfully removed.` })
       }
       set({ deleting: false })
     },
@@ -45,18 +40,14 @@ export default createModel<RootModel>()({
       const { set } = dispatch.shares
       const device = getDevices(state).find((d: IDevice) => d.id === data.deviceId)
       set({ sharing: true })
-      try {
-        const response = await graphQLShareDevice(data)
-        const errors = graphQLGetErrors(response)
-        if (!errors)
-          dispatch.ui.set({
-            successMessage:
-              data.email.length > 1
-                ? `${data.email.length} accounts successfully shared to ${attributeName(device)}.`
-                : `${attributeName(device)} successfully shared to ${data.email[0]}.`,
-          })
-      } catch (error) {
-        await graphQLCatchError(error)
+      const response = await graphQLShareDevice(data)
+      if (response !== 'ERROR') {
+        dispatch.ui.set({
+          successMessage:
+            data.email.length > 1
+              ? `${data.email.length} accounts successfully shared to ${attributeName(device)}.`
+              : `${attributeName(device)} successfully shared to ${data.email[0]}.`,
+        })
       }
       set({ sharing: false })
     },

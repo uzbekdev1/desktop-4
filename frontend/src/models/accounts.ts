@@ -86,8 +86,7 @@ export default createModel<RootModel>()({
       const { access } = state.accounts as ApplicationState['accounts']
       try {
         const result = await graphQLLinkAccount(emails, 'ADD')
-        const errors = graphQLGetErrors(result)
-        if (!errors?.length) {
+        if (result === 'ERROR') {
           analyticsHelper.track('addAccess')
           dispatch.accounts.set({ access: [...access, ...emails.map(email => ({ email, created: new Date() }))] })
           dispatch.ui.set({
@@ -105,8 +104,7 @@ export default createModel<RootModel>()({
       const { access } = state.accounts as ApplicationState['accounts']
       try {
         const result = await graphQLLinkAccount([email], 'REMOVE')
-        const errors = graphQLGetErrors(result)
-        if (!errors?.length) {
+        if (result === 'ERROR') {
           analyticsHelper.track('removedAccess')
           dispatch.accounts.set({ access: access.filter(user => user.email !== email) })
           dispatch.ui.set({ successMessage: `${email} successfully removed.` })
@@ -119,8 +117,7 @@ export default createModel<RootModel>()({
       const { member } = state.accounts as ApplicationState['accounts']
       try {
         const result = await graphQLLinkAccount([email], 'LEAVE')
-        const errors = graphQLGetErrors(result)
-        if (!errors?.length) {
+        if (result === 'ERROR') {
           analyticsHelper.track('leaveMembership')
           dispatch.accounts.set({ member: member.filter(user => user.email !== email) })
           dispatch.ui.set({ successMessage: `You have successfully left ${email}'s device list.` })
