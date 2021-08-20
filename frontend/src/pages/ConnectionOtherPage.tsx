@@ -40,7 +40,7 @@ export const ConnectionOtherPage: React.FC = () => {
             <InfoButton device={device} service={service} />
           </Typography>
           <Gutters>
-            <ConnectionDetails connection={connection} session={session} show />
+            <ConnectionDetails connection={connection} session={session} show service={service}/>
           </Gutters>
           {/* <Icon name="arrow-right" size="lg" /> */}
           {/* <Icon name="ellipsis-h" /> */}

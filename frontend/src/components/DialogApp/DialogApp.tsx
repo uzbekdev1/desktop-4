@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react'
-import { Typography, Dialog, DialogActions, Button, Box, Divider, Grid } from '@material-ui/core'
+import React from 'react'
+import { Dialog, DialogActions, Button, DialogTitle, DialogContent, DialogContentText } from '@material-ui/core'
 import { Application } from '../../shared/applications'
 import { emit } from '../../services/Controller'
 import { ApplicationState, Dispatch } from '../../store'
@@ -34,59 +34,31 @@ export const DialogApp: React.FC<{
 
   const App = type === 'VNC' ? 'VNC Viewer' : 'Putty'
   const getApp = () => {
-    requireDownloadApp() ? window.open(getLinkDownload()) : emit('launch/app', launchApp)
+    requireDownloadApp() ? window.open(getLinkDownload()) : emit('launch/app', { launchApp, app })
     closeAll()
   }
   const launchBrowser = () => {
     window.open(app?.command)
     closeAll()
   }
-  const title = requireDownloadApp() ? ` Please install ${App} to launch ${type} connections.` : ` ${type} connections `
-  const buttonText = requireDownloadApp() ? ` Download ${App} ` : `  launch ${App} `
+  const title = requireDownloadApp() ? ` ${type} client not found.` : ` ${type} connections `
+  const buttonText = requireDownloadApp() ? ` Get ${App} ` : `  launch ${App} `
 
   return (
     <>
-      <Dialog open={openApp} onClose={closeAll} maxWidth="xs" fullWidth>
-        <Box m={0} p={2}>
-          <Grid container>
-
-            <Grid item xs={7} md={7}>
-              <Box m={1} pt={2}>
-                <Typography variant="h2">{title}</Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={5} md={5}>
-              <Box p={1}>
-                <Button onClick={getApp} variant="contained" color="primary"  >{buttonText}</Button>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={12}><Box m={2}><Divider></Divider></Box></Grid>
-            <Grid item xs={7} md={7}>
-              <Box p={1}>
-                <Typography variant="h2" style={{ color: "#999" }}>
-                  {app?.command}
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={5} md={5}>
-              <Box p={1}>
-                <Button onClick={launchBrowser} variant="contained" color="primary"  >
-                  Launch Browser
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-
-          <Box m={2}><Divider></Divider></Box>
-
-          <Box m={1}>
-            <DialogActions>
-              <Button onClick={closeAll} color="primary" size="small" type="button">
-                Cancel
-              </Button>
-            </DialogActions>
-          </Box>
-        </Box>
+      <Dialog open={openApp} onClose={closeAll} maxWidth="sm" fullWidth>
+        <DialogTitle >{title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You can use a browser-based {type} launcher to access this connection.
+            Alternatively, you can download and install PuTTy
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={getApp} style={{ borderRadius: 3, left: '-120px' }} variant="contained" color="primary"   >{buttonText}</Button>
+          <Button onClick={closeAll} style={{ borderRadius: 3 }} size="small" color="primary">Cancel</Button>
+          <Button onClick={launchBrowser} style={{ borderRadius: 3 }} variant="contained" color="primary"  >User browser launcher</Button>
+        </DialogActions>
       </Dialog>
     </>
   )

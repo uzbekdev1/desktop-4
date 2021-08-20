@@ -25,7 +25,18 @@ type Props = {
   onLaunch?: () => void
 }
 
-export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, dataButton, size = 'md', color, type, onLaunch, onMouseEnter, onMouseLeave }) => {
+export const LaunchButton: React.FC<Props> = ({
+  connection,
+  service,
+  menuItem,
+  dataButton,
+  size = 'md',
+  color,
+  type,
+  onLaunch,
+  onMouseEnter,
+  onMouseLeave,
+}) => {
   const { ui } = useDispatch<Dispatch>()
 
   const { loading, path, launchState } = useSelector((state: ApplicationState) => ({
@@ -37,8 +48,7 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
   const [launchApp, setLaunchApp] = useState<ILaunchApp>()
   const disabled = !connection?.enabled
   const [openLaunchApplication, setOpenLaunchApplication] = useState<boolean>(false)
-  const app = useApplication('launch', service, connection)
-
+  const app = useApplication(connection && connection.launchType === 'Use command' ? 'copy' : 'launch', service, connection)
   useEffect(() => {
     if (openLaunchApplication && !loading) {
       launchApplication()
@@ -46,9 +56,6 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
     }
   }, [loading])
 
-  useEffect(() => {
-    return () => closeAll()
-  }, [])
 
   if (!app || !connection?.enabled) return null
 
@@ -93,11 +100,9 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
     const applicationObj = getApplicationObj(service?.typeID, app.connection?.username)
     if (isWindows() && applicationObj.application !== '') {
       const applicationObj = getApplicationObj(service?.typeID, app.connection?.username)
-
       ui.set({ launchLoading: true, requireInstall: 'none' })
-      emit('check/app', applicationObj?.application)
+      emit('check/app', { application: applicationObj.application, cmd: app.checkApplicationCmd })
       setOpenLaunchApplication(true)
-
     } else {
       window.open(command || app.command)
     }
@@ -105,7 +110,7 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
   }
 
   const LaunchIcon = (
-    <Icon name={loading ? 'spinner-third' : app.icon} spin={loading} size={size} color={color} type={type} fixedWidth />
+    <Icon name={loading ? 'spinner-third' : 'launch'} spin={loading} size={size} color={color} type={type} fixedWidth />
   )
 
   return (
@@ -125,13 +130,13 @@ export const LaunchButton: React.FC<Props> = ({ connection, service, menuItem, d
         />
       ) : (
         <Tooltip title={app.contextTitle}>
-          <IconButton onClick={clickHandler} disabled={loading} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+          <IconButton onClick={clickHandler} disabled={loading} >
             {LaunchIcon}
           </IconButton>
         </Tooltip>
       )}
       <PromptModal app={app} open={launchState.open} onClose={closeAll} onSubmit={onSubmit} />
-      {isWindows() && <DialogApp launchApp={launchApp} app={app} type={service?.type} />}
+      <DialogApp launchApp={launchApp} app={app} type={service?.type} />
     </>
   )
 }
