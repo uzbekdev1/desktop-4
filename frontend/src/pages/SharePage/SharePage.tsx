@@ -87,7 +87,7 @@ export const SharePage: React.FC<{ device?: IDevice }> = ({ device }) => {
       setScriptIndeterminate(false)
     }
 
-    matchServices ? setSelectedServices([...matchServices, serviceID]) : setSelectedServices([serviceID])
+    contacts.find(c => emails.includes(c.email)) === undefined && emails.length > 0 && setSelectedServices(device.services.map(item => item.id))
     setIndeterminate(indeterminateServices)
     setUserSelected(contacts.find(c => emails.includes(c.email)))
     setSelected(emails)
